@@ -82,6 +82,21 @@
                 <p id="welcome-msg" class="text-lg md:text-xl text-slate-700"></p>
             </div>
         </header>
+
+        <!-- Self Test Section -->
+        <div class="bg-indigo-50 border-2 border-indigo-100 rounded-3xl p-8 mb-12 shadow-lg text-center">
+            <h2 class="text-3xl md:text-4xl font-black text-indigo-900 mb-3">🏆 সেলফ টেস্ট (মক টেস্ট)</h2>
+            <p class="text-indigo-700 text-lg mb-8 font-medium">সবগুলো টপিক থেকে এলোমেলো প্রশ্ন নিয়ে নিজের সম্পূর্ণ প্রস্তুতি যাচাই করো।</p>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6">
+                <button onclick="startTest(25)" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-2xl shadow-lg transition-all w-full md:w-auto flex justify-center items-center gap-2">
+                    ২৫টি প্রশ্নের টেস্ট
+                </button>
+                <button onclick="startTest(50)" class="px-8 py-4 bg-rose-600 hover:bg-rose-700 text-white text-xl font-bold rounded-2xl shadow-lg transition-all w-full md:w-auto flex justify-center items-center gap-2">
+                    ৫০টি প্রশ্নের টেস্ট
+                </button>
+            </div>
+        </div>
+
         <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
     </div>
 
@@ -134,7 +149,10 @@
             <div class="text-7xl mb-6">🏆</div>
             <h2 class="text-4xl font-black text-slate-900 mb-4">দুর্দান্ত কাজ!</h2>
             <p class="text-xl text-slate-500 mb-8">আপনি এই টপিকটির সব প্রশ্ন সম্পন্ন করেছেন।</p>
-            <div id="score" class="text-5xl font-black text-indigo-600 mb-10 bg-indigo-50 py-6 rounded-3xl border border-indigo-100"></div>
+            <div id="score" class="text-5xl font-black text-indigo-600 mb-6 bg-indigo-50 py-6 rounded-3xl border border-indigo-100"></div>
+            
+            <div id="save-status-msg" class="text-lg mb-8 hidden p-4 rounded-xl"></div>
+            
             <button onclick="goHome()" class="w-full py-4 bg-slate-900 hover:bg-black text-white text-xl font-bold rounded-2xl transition-all shadow-xl">
                 হোম পেজে ফিরে যান
             </button>
@@ -893,7 +911,7 @@ _T8_
         ];
 
         // GOOGLE SCRIPT URL (Replace with yours after deploying)
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9q5Rj_U4z1ssz35Paf0y7SiIbIrHJ0NrPneVitZWI0GjpAat9KYvhLc7CfoAJplgNYA/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2c5p66xWDvuCqfFIqDFHcDu1fqTrrjzdG1AIDDR7J5CvvaQTqKildtm1QSX0BJJisog/exec"; 
         
         let studentData = {};
         let currentTopicId = '';
@@ -901,6 +919,7 @@ _T8_
         let currentIndex = 0;
         let score = 0;
         let isAnswered = false;
+        let isTestMode = false;
 
         function submitStudentInfo(e) {
             e.preventDefault();
@@ -1029,11 +1048,35 @@ _T8_
         }
 
         function startQuiz(topicId) {
+            isTestMode = false;
             currentTopicId = topicId;
             const topic = topics.find(t => t.id === topicId);
             document.getElementById('t-name').innerText = topic.name;
             
             currentQuestions = shuffle([...allQuestionsData[topicId]]);
+            currentIndex = 0;
+            score = 0;
+            
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('finish-page').classList.add('hidden');
+            document.getElementById('quiz-page').classList.remove('hidden');
+            window.scrollTo(0,0);
+            loadQuestion();
+        }
+
+        function startTest(numQuestions) {
+            isTestMode = true;
+            currentTopicId = 'self_test';
+            document.getElementById('t-name').innerText = `মক টেস্ট (${numQuestions}টি প্রশ্ন)`;
+            
+            let allQs = [];
+            for (let key in allQuestionsData) {
+                allQs = allQs.concat(allQuestionsData[key]);
+            }
+            
+            allQs = shuffle(allQs);
+            currentQuestions = allQs.slice(0, numQuestions);
+            
             currentIndex = 0;
             score = 0;
             
@@ -1120,10 +1163,44 @@ _T8_
             document.getElementById('quiz-page').classList.add('hidden');
             document.getElementById('finish-page').classList.remove('hidden');
             document.getElementById('score').innerText = `${score} / ${currentQuestions.length}`;
+            
+            const saveMsg = document.getElementById('save-status-msg');
+            
+            if (isTestMode && GOOGLE_SCRIPT_URL) {
+                saveMsg.innerHTML = `<span class="text-blue-600 font-bold flex items-center justify-center gap-2"><svg class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> টেস্টের রেজাল্ট সেভ করা হচ্ছে...</span>`;
+                saveMsg.className = "text-lg mb-8 p-4 rounded-xl bg-blue-50 border border-blue-200 block";
+                
+                const scoreData = {
+                    ...studentData,
+                    action: 'save_score',
+                    testType: `${currentQuestions.length} Qs Test`,
+                    score: score,
+                    total: currentQuestions.length,
+                    timestamp: new Date().toLocaleString()
+                };
+                
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(scoreData)
+                }).then(res => {
+                    saveMsg.innerHTML = `<span class="text-green-700 font-bold">✅ রেজাল্ট সফলভাবে এক্সেল শিটে সেভ হয়েছে!</span>`;
+                    saveMsg.className = "text-lg mb-8 p-4 rounded-xl bg-green-50 border border-green-200 block";
+                }).catch(err => {
+                    saveMsg.innerHTML = `<span class="text-red-700 font-bold">❌ রেজাল্ট সেভ করতে সমস্যা হয়েছে।</span>`;
+                    saveMsg.className = "text-lg mb-8 p-4 rounded-xl bg-red-50 border border-red-200 block";
+                });
+            } else {
+                saveMsg.classList.add('hidden');
+            }
         }
 
         function resetQuiz() {
-            startQuiz(currentTopicId);
+            if (isTestMode) {
+                startTest(currentQuestions.length);
+            } else {
+                startQuiz(currentTopicId);
+            }
         }
 
         function goHome() {
