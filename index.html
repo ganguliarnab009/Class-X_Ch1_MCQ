@@ -191,7 +191,7 @@
         // ==========================================
         
         // REPLACE THIS URL WITH YOUR PUBLISHED GOOGLE APPS SCRIPT WEB APP URL
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby0nBKY6U_iz4yeQkufV1rUsUtsyI-GtFPB7prsT9Q4UEVEKRrscCF5ctj90uEZGBV_TQ/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzrioIHKmp75PjdCIoPQD4Wy4xvWAf6ao09N_LyMhLHt8YvTrXtCFH8zJh5oH_cOZ3bOw/exec"; 
 
         const CHAPTERS = [
             "জীবজগতে নিয়ন্ত্রণ ও সমন্বয়",
@@ -493,7 +493,8 @@
         }
 
         function openExternalTest(url) {
-            alert('এই টেস্টটি একটি বাইরের লিংকে (যেমন Google Form) খুলবে।');
+            // Replaced alert() with showToast() per mandatory rules
+            showToast('এই টেস্টটি একটি বাইরের লিংকে খুলবে।', 'info');
             window.open(url, '_blank');
         }
 
@@ -536,17 +537,22 @@
                 }
             });
 
+            // Make sure we have the exact chapter name to filter by
             const chName = CHAPTERS[state.currentChapter];
+            console.log("Current Chapter:", chName); // For debugging
+            console.log("All Materials:", state.data.materials); // For debugging
 
             if (tab === 'notes') {
+                // Filter ensuring exact match
                 const materials = state.data.materials.filter(m => m.chapter === chName);
-                if(materials.length === 0) area.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো নোটস এখনো আপলোড করা হয়নি।</div>`;
-                else {
+                if(materials.length === 0) {
+                     area.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো নোটস এখনো আপলোড করা হয়নি।</div>`;
+                } else {
                     area.innerHTML = `<div class="grid gap-4 md:grid-cols-2">` + materials.map(m => `
                         <a href="${m.link}" target="_blank" class="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition group">
                             <div class="bg-emerald-100 text-primary w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition"><i class="fa-solid fa-file-pdf"></i></div>
                             <div class="ml-4">
-                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">${m.type}</span>
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">${m.type || 'Notes'}</span>
                                 <h3 class="font-bold text-gray-800 leading-tight">${m.title}</h3>
                             </div>
                         </a>
@@ -656,8 +662,13 @@
                 el.classList.remove('bg-gray-700', 'border-primary');
                 el.classList.add('border-transparent');
             });
-            event.currentTarget.classList.add('bg-gray-700', 'border-primary');
-            event.currentTarget.classList.remove('border-transparent');
+            
+            // Find the active tab button by matching the onclick attribute
+            const activeBtn = document.querySelector(`button[onclick="switchAdminTab('${tabId}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-gray-700', 'border-primary');
+                activeBtn.classList.remove('border-transparent');
+            }
 
             if (window.innerWidth < 768) {
                 document.getElementById('admin-sidebar').classList.add('-translate-x-full');
