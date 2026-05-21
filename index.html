@@ -3,1212 +3,810 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>জীবন বিজ্ঞান কুইজ - Arnab Ganguli</title>
+    <title>মাধ্যমিক জীবনবিজ্ঞান সহায়ক</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Anek Bangla"', 'sans-serif'] },
+                    colors: { primary: '#059669', secondary: '#10b981', dark: '#064e3b' }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
-        .btn-option:disabled { cursor: not-allowed; opacity: 1; }
-        .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        ::-webkit-scrollbar { width: 8px; }
+        body { font-family: 'Anek Bangla', sans-serif; background-color: #f3f4f6; }
+        .spinner { border: 4px solid rgba(0,0,0,0.1); border-left-color: #059669; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        .tab-btn.active { border-bottom: 2px solid #059669; color: #059669; font-weight: bold; }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
+<body class="text-gray-800 antialiased overflow-x-hidden">
 
-    <!-- Student Login Page -->
-    <div id="login-page" class="max-w-xl mx-auto px-4 py-12 md:py-20">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-10 border border-slate-200">
-            <div class="text-center mb-8">
-                <div class="text-5xl mb-4">🔬</div>
-                <h2 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-                    দশম শ্রেণী, প্রথম অধ্যায়:<br>
-                    <span class="text-indigo-600">জীবজগতে নিয়ন্ত্রণ ও সমন্বয়</span><br>
-                    <span class="text-xl md:text-2xl text-slate-700">বহুনির্বাচনী প্রশ্ন</span>
-                </h2>
-                <p class="text-lg md:text-xl text-slate-500 font-bold mt-3 bg-slate-100 inline-block px-4 py-1 rounded-full">Prepared by Arnab Ganguli</p>
+    <!-- Loading Overlay -->
+    <div id="loader" class="fixed inset-0 bg-white/80 z-[100] hidden flex-col items-center justify-center backdrop-blur-sm">
+        <div class="spinner mb-4"></div>
+        <h2 class="text-xl font-bold text-primary">লোড হচ্ছে...</h2>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[110] flex flex-col gap-2"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="min-h-screen flex flex-col">
+
+        <!-- LOGIN VIEW -->
+        <div id="view-login" class="flex-1 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                <div class="bg-primary p-6 text-center text-white">
+                    <i class="fa-solid fa-leaf text-4xl mb-2"></i>
+                    <h1 class="text-2xl font-bold">মাধ্যমিক জীবনবিজ্ঞান সহায়ক</h1>
+                </div>
                 
-                <div class="w-full h-px bg-slate-200 my-6"></div>
+                <div class="flex border-b">
+                    <button onclick="toggleAuthTab('student')" id="tab-login-student" class="flex-1 py-3 font-semibold bg-gray-50 text-primary border-b-2 border-primary transition">ছাত্র/ছাত্রী</button>
+                    <button onclick="toggleAuthTab('admin')" id="tab-login-admin" class="flex-1 py-3 font-semibold text-gray-500 hover:bg-gray-50 transition">অ্যাডমিন</button>
+                </div>
+
+                <div class="p-6">
+                    <!-- Student Form -->
+                    <form id="form-student-login" class="space-y-4" onsubmit="handleStudentLogin(event)">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">নাম <span class="text-red-500">*</span></label>
+                            <input type="text" id="std-name" required class="w-full border rounded-lg px-3 py-2 focus:outline-primary" placeholder="তোমার নাম">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-sm font-semibold mb-1">রোল নং <span class="text-red-500">*</span></label>
+                                <input type="number" id="std-roll" required class="w-full border rounded-lg px-3 py-2 focus:outline-primary" placeholder="রোল">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-semibold mb-1">সেকশন <span class="text-red-500">*</span></label>
+                                <input type="text" id="std-sec" required class="w-full border rounded-lg px-3 py-2 focus:outline-primary" placeholder="A/B/C">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">শ্রেণী</label>
+                            <input type="text" id="std-class" value="দশম শ্রেণী (মাধ্যমিক)" readonly class="w-full border rounded-lg px-3 py-2 bg-gray-100 text-gray-600">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">বিদ্যালয়ের নাম</label>
+                            <input type="text" id="std-school" value="Hatgacha Haridas Vidyapith (H.S.)" class="w-full border rounded-lg px-3 py-2 focus:outline-primary">
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-dark text-white font-bold py-2 px-4 rounded-lg transition shadow-md">প্রবেশ করুন</button>
+                    </form>
+
+                    <!-- Admin Form -->
+                    <form id="form-admin-login" class="space-y-4 hidden" onsubmit="handleAdminLogin(event)">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">অ্যাডমিন আইডি</label>
+                            <input type="text" id="admin-id" required class="w-full border rounded-lg px-3 py-2 focus:outline-primary" placeholder="Admin ID">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">পাসওয়ার্ড</label>
+                            <input type="password" id="admin-pwd" required class="w-full border rounded-lg px-3 py-2 focus:outline-primary" placeholder="****">
+                        </div>
+                        <button type="submit" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md">লগইন করুন</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDENT DASHBOARD -->
+        <div id="view-student" class="hidden flex-1 flex flex-col md:flex-row h-screen">
+            <!-- Mobile Header -->
+            <div class="bg-primary text-white p-4 flex justify-between items-center md:hidden shadow-md z-10">
+                <h1 class="font-bold text-lg truncate"><i class="fa-solid fa-leaf mr-2"></i>জীবনবিজ্ঞান সহায়ক</h1>
+                <button onclick="toggleSidebar('std-sidebar')" class="text-white text-2xl"><i class="fa-solid fa-bars"></i></button>
+            </div>
+
+            <!-- Sidebar -->
+            <aside id="std-sidebar" class="bg-white w-full md:w-72 shadow-lg h-full fixed md:relative z-20 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
+                <div class="p-5 bg-primary text-white hidden md:block">
+                    <h1 class="font-bold text-xl"><i class="fa-solid fa-leaf mr-2"></i>জীবনবিজ্ঞান সহায়ক</h1>
+                    <p class="text-sm opacity-90 mt-1" id="std-user-name">Student Name</p>
+                </div>
+                <div class="md:hidden p-4 bg-gray-100 flex justify-between items-center border-b">
+                    <span class="font-bold text-primary">মেনু</span>
+                    <button onclick="toggleSidebar('std-sidebar')" class="text-xl text-gray-600"><i class="fa-solid fa-times"></i></button>
+                </div>
                 
-                <h3 class="text-xl font-bold text-slate-800">শিক্ষার্থীর তথ্য</h3>
-                <p class="text-slate-500 mt-1">কুইজ শুরু করতে নিচের তথ্যগুলো পূরণ করো</p>
-            </div>
-            
-            <form id="student-form" onsubmit="submitStudentInfo(event)" class="space-y-5">
-                <div>
-                    <label class="block text-slate-700 font-bold mb-2">তোমার নাম *</label>
-                    <input type="text" id="s-name" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="যেমন: আবির হাসান">
+                <div class="flex-1 overflow-y-auto py-4">
+                    <p class="px-5 text-xs font-bold text-gray-400 uppercase mb-2">অধ্যায়সমূহ</p>
+                    <nav id="std-chapter-list" class="space-y-1 mb-6"></nav>
+                    
+                    <p class="px-5 text-xs font-bold text-gray-400 uppercase mb-2">পরীক্ষা</p>
+                    <nav>
+                        <button onclick="loadStudentView('mock')" class="w-full text-left px-5 py-3 hover:bg-emerald-50 text-gray-700 font-semibold border-l-4 border-transparent hover:border-primary transition flex items-center gap-3">
+                            <i class="fa-solid fa-laptop-file text-blue-500 w-5"></i> মক টেস্ট (Mock Test)
+                        </button>
+                    </nav>
                 </div>
-                <div>
-                    <label class="block text-slate-700 font-bold mb-2">ক্লাস (Class) *</label>
-                    <input type="text" id="s-class" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="যেমন: Class 10">
+                <div class="p-4 border-t">
+                    <button onclick="logout()" class="w-full py-2 bg-red-50 text-red-600 font-bold rounded-lg hover:bg-red-100 transition"><i class="fa-solid fa-sign-out-alt mr-2"></i>লগআউট</button>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-700 font-bold mb-2">সেকশন *</label>
-                        <input type="text" id="s-sec" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="যেমন: A">
-                    </div>
-                    <div>
-                        <label class="block text-slate-700 font-bold mb-2">রোল নং</label>
-                        <input type="text" id="s-roll" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="যেমন: 12">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-slate-700 font-bold mb-2">স্কুলের নাম *</label>
-                    <input type="text" id="s-school" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="স্কুলের পুরো নাম লিখো">
-                </div>
-                <button type="submit" id="submit-btn" class="w-full mt-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2">
-                    কুইজ শুরু করো
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                </button>
-            </form>
-        </div>
-    </div>
+            </aside>
 
-    <!-- Home Page (Topics) -->
-    <div id="home-page" class="hidden max-w-6xl mx-auto px-4 py-10 md:py-16">
-        <header class="text-center mb-12">
-            <h1 class="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight leading-tight">
-                দশম শ্রেণী, প্রথম অধ্যায়:<br>
-                <span class="text-indigo-600">জীবজগতে নিয়ন্ত্রণ ও সমন্বয়</span><br>
-                <span class="text-2xl md:text-3xl text-slate-700 mt-2 block">বহুনির্বাচনী প্রশ্ন</span>
-            </h1>
-            <p class="text-xl text-slate-500 font-bold mb-6">Prepared by Arnab Ganguli</p>
-            
-            <div class="inline-block bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200 mt-2">
-                <p id="welcome-msg" class="text-lg md:text-xl text-slate-700"></p>
-            </div>
-        </header>
-
-        <!-- Self Test Section -->
-        <div class="bg-indigo-50 border-2 border-indigo-100 rounded-3xl p-8 mb-12 shadow-lg text-center">
-            <h2 class="text-3xl md:text-4xl font-black text-indigo-900 mb-3">🏆 সেলফ টেস্ট (মক টেস্ট)</h2>
-            <p class="text-indigo-700 text-lg mb-8 font-medium">সবগুলো টপিক থেকে এলোমেলো প্রশ্ন নিয়ে নিজের সম্পূর্ণ প্রস্তুতি যাচাই করো।</p>
-            <div class="flex flex-col md:flex-row justify-center items-center gap-6">
-                <button onclick="startTest(25)" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-2xl shadow-lg transition-all w-full md:w-auto flex justify-center items-center gap-2">
-                    ২৫টি প্রশ্নের টেস্ট
-                </button>
-                <button onclick="startTest(50)" class="px-8 py-4 bg-rose-600 hover:bg-rose-700 text-white text-xl font-bold rounded-2xl shadow-lg transition-all w-full md:w-auto flex justify-center items-center gap-2">
-                    ৫০টি প্রশ্নের টেস্ট
-                </button>
-            </div>
+            <!-- Main Content Area -->
+            <main class="flex-1 bg-gray-50 h-full overflow-y-auto p-4 md:p-8 relative" id="std-main-content">
+                <!-- Content injected here -->
+            </main>
         </div>
 
-        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-    </div>
-
-    <!-- Quiz Page -->
-    <div id="quiz-page" class="hidden max-w-4xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
-            <div class="bg-slate-50 px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <button onclick="goHome()" class="px-5 py-2 bg-white hover:bg-slate-100 rounded-xl shadow-sm transition-all text-slate-700 border border-slate-200 font-bold flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                    </svg>
-                    হোম
-                </button>
-                <div class="text-right">
-                    <h2 id="t-name" class="text-lg md:text-xl font-bold text-slate-800"></h2>
-                    <span id="q-prog" class="text-indigo-600 font-black text-lg"></span>
-                </div>
+        <!-- ADMIN DASHBOARD -->
+        <div id="view-admin" class="hidden flex-1 flex flex-col md:flex-row h-screen">
+            <!-- Mobile Header -->
+            <div class="bg-gray-800 text-white p-4 flex justify-between items-center md:hidden shadow-md z-10">
+                <h1 class="font-bold text-lg"><i class="fa-solid fa-user-shield mr-2"></i>অ্যাডমিন প্যানেল</h1>
+                <button onclick="toggleSidebar('admin-sidebar')" class="text-white text-2xl"><i class="fa-solid fa-bars"></i></button>
             </div>
 
-            <div class="p-6 md:p-10">
-                <h3 id="q-text" class="text-2xl md:text-3xl font-bold text-slate-900 mb-8 leading-snug"></h3>
-                <div id="opts" class="grid gap-4 mb-8"></div>
+            <!-- Sidebar -->
+            <aside id="admin-sidebar" class="bg-gray-800 text-white w-full md:w-64 shadow-lg h-full fixed md:relative z-20 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
+                <div class="p-5 border-b border-gray-700 hidden md:block">
+                    <h1 class="font-bold text-xl"><i class="fa-solid fa-user-shield mr-2"></i>অ্যাডমিন প্যানেল</h1>
+                </div>
+                <div class="md:hidden p-4 bg-gray-900 flex justify-between items-center border-b border-gray-700">
+                    <span class="font-bold text-white">মেনু</span>
+                    <button onclick="toggleSidebar('admin-sidebar')" class="text-xl text-gray-400"><i class="fa-solid fa-times"></i></button>
+                </div>
                 
-                <div id="fb" class="hidden p-6 rounded-2xl mb-8 border-l-[10px] transition-all shadow-md">
-                    <p id="fb-msg" class="text-2xl font-black mb-1"></p>
-                    <p id="fb-ans" class="text-lg font-bold"></p>
+                <div class="flex-1 overflow-y-auto py-4">
+                    <nav id="admin-nav" class="space-y-1">
+                        <button onclick="switchAdminTab('students')" class="admin-tab w-full text-left px-5 py-3 hover:bg-gray-700 font-semibold border-l-4 border-transparent transition"><i class="fa-solid fa-users w-6"></i> ছাত্রছাত্রী</button>
+                        <button onclick="switchAdminTab('logs')" class="admin-tab w-full text-left px-5 py-3 hover:bg-gray-700 font-semibold border-l-4 border-transparent transition"><i class="fa-solid fa-history w-6"></i> লগিন হিস্ট্রি</button>
+                        <button onclick="switchAdminTab('materials')" class="admin-tab w-full text-left px-5 py-3 hover:bg-gray-700 font-semibold border-l-4 border-transparent transition"><i class="fa-solid fa-book w-6"></i> স্টাডি মেটেরিয়াল</button>
+                        <button onclick="switchAdminTab('videos')" class="admin-tab w-full text-left px-5 py-3 hover:bg-gray-700 font-semibold border-l-4 border-transparent transition"><i class="fa-brands fa-youtube w-6 text-red-400"></i> ভিডিও ক্লাস</button>
+                        <button onclick="switchAdminTab('mockTests')" class="admin-tab w-full text-left px-5 py-3 hover:bg-gray-700 font-semibold border-l-4 border-transparent transition"><i class="fa-solid fa-laptop-file w-6 text-blue-400"></i> মক টেস্ট</button>
+                        <button onclick="switchAdminTab('practiceTests')" class="admin-tab w-full text-left px-5 py-3 hover:bg-gray-700 font-semibold border-l-4 border-transparent transition"><i class="fa-solid fa-brain w-6 text-purple-400"></i> প্র্যাকটিস MCQ</button>
+                    </nav>
                 </div>
+                <div class="p-4 border-t border-gray-700">
+                    <button onclick="logout()" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition"><i class="fa-solid fa-sign-out-alt mr-2"></i>লগআউট</button>
+                </div>
+            </aside>
 
-                <div class="flex flex-col md:flex-row justify-between items-center border-t border-slate-100 pt-8 gap-4">
-                    <button onclick="resetQuiz()" class="text-slate-400 hover:text-red-500 font-bold text-lg transition-all flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                        </svg>
-                        রিসেট কুইজ
-                    </button>
-                    <button id="next" onclick="nextQuestion()" class="hidden w-full md:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all flex justify-center items-center gap-2">
-                        পরবর্তী প্রশ্ন 
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <!-- Main Content Area -->
+            <main class="flex-1 bg-gray-100 h-full overflow-y-auto p-4 md:p-8" id="admin-main-content">
+                <!-- Content injected here -->
+            </main>
         </div>
     </div>
 
-    <!-- Finish Screen -->
-    <div id="finish-page" class="hidden max-w-2xl mx-auto px-4 py-20 text-center">
-        <div class="bg-white rounded-[3rem] p-12 shadow-2xl border border-slate-100">
-            <div class="text-7xl mb-6">🏆</div>
-            <h2 class="text-4xl font-black text-slate-900 mb-4">দুর্দান্ত কাজ!</h2>
-            <p class="text-xl text-slate-500 mb-8">আপনি এই টপিকটির সব প্রশ্ন সম্পন্ন করেছেন।</p>
-            <div id="score" class="text-5xl font-black text-indigo-600 mb-6 bg-indigo-50 py-6 rounded-3xl border border-indigo-100"></div>
-            
-            <div id="save-status-msg" class="text-lg mb-8 hidden p-4 rounded-xl"></div>
-            
-            <button onclick="goHome()" class="w-full py-4 bg-slate-900 hover:bg-black text-white text-xl font-bold rounded-2xl transition-all shadow-xl">
-                হোম পেজে ফিরে যান
-            </button>
-        </div>
-    </div>
-
-<!-- RAW DATA STORE (All Questions) -->
-<textarea id="r" class="hidden" style="display:none;">
-_T1_
-১. জীবদের পরিবেশের যে-কোনো পরিবর্তন সাপেক্ষে সাড়া প্রদানের ক্ষমতাকে কী বলে? A) চলন B) গমন C) সংবেদনশীলতা D) সমন্বয় উত্তর: C)সংবেদনশীলতা
-২. পরিবেশে যেসব পরিবর্তন জীব শনাক্ত করতে পারে এবং সাড়া প্রদানে সাহায্য করে, তাদের কী বলা হয়? A) উদ্দীপক B) গ্রাহক C) বাহক D) কারক উত্তর: A)উদ্দীপক
-৩. উদ্দীপক প্রধানত কয় প্রকারের হয়ে থাকে? A) ২ প্রকার B) ৩ প্রকার C) ৪ প্রকার D) ৫ প্রকার উত্তর: A)২ প্রকার
-৪. নিচের কোনটি একটি বাহ্যিক উদ্দীপকের (External stimulus) উদাহরণ? A) হরমোন B) উৎসেচক C) আলো D) প্রোটিন উত্তর: C)আলো
-৫. নিচের কোনটি জীবদেহের অভ্যন্তরীণ উদ্দীপকের (Internal stimulus) উদাহরণ? A) আলো B) তাপ C) অভিকর্ষ D) হরমোন উত্তর: D)হরমোন
-৬. যে প্রক্রিয়ায় জীব নির্দিষ্ট স্থানে স্থির থেকে স্বতঃস্ফূর্তভাবে বা উদ্দীপকের প্রভাবে অঙ্গপ্রত্যঙ্গ সঞ্চালন করে, তাকে কী বলে? A) গমন B) চলন C) সংবেদনশীলতা D) আবর্তন উত্তর: B)চলন
-৭. অঙ্গপ্রত্যঙ্গ সঞ্চালনের দ্বারা সামগ্রিকভাবে জীবের স্থান পরিবর্তনকে কী বলে? A) চলন B) গমন C) রোটেশন D) সারকুলেশন উত্তর: B)গমন
-৮. গমনের সময় নিচের কোনটি অবশ্যই সম্পন্ন হয়? A) চলন B) রোটেশন C) প্রকরণ D) সংবেদনশীলতা উত্তর: A)চলন
-৯. গমনে সক্ষম একটি উদ্ভিদের উদাহরণ কোনটি? A) স্পঞ্জ B) ভলভক্স C) সাগরকুসুম D) লজ্জাবতী উত্তর: B)ভলভক্স
-১০. গমনে অক্ষম একটি প্রাণীর উদাহরণ কোনটি? A) ক্ল্যামাইডোমোনাস B) ডায়াটম C) স্পঞ্জ D) অ্যামিবা উত্তর: C)স্পঞ্জ
-১১. উদ্ভিদের সঞ্চালন বলতে প্রধানত কীরূপ চলনকে বোঝায়? A) দ্রুত চলন B) ধীর বৃদ্ধিজ ও রসস্ফীতিজনিত চলন C) সামগ্রিক চলন D) আবর্ত চলন উত্তর: B) ধীর বৃদ্ধিজ ও রসস্ফীতিজনিত চলন
-১২. চলনের জন্য নির্দিষ্ট কোনো অঙ্গের প্রয়োজন হয় কি? A) হ্যাঁ, সবসময় হয় B) না, প্রয়োজন হয় না C) শুধুমাত্র উদ্ভিদের হয় D) শুধুমাত্র প্রাণীদের হয় উত্তর: B) না, প্রয়োজন হয় না
-১৩. গমনের জন্য ব্যবহৃত একটি নির্দিষ্ট অঙ্গের উদাহরণ কোনটি? A) পালভিনাস B) সিলিয়া C) ক্লোরোপ্লাস্ট D) স্টোমাটা উত্তর: B)সিলিয়া
-১৪. মাটিতে বীজ রোপণ করার পর মূল মাটির নীচে এবং কাণ্ড মাটির ওপর বৃদ্ধি পাওয়া কিসের উদাহরণ? A) গমন B) সংবেদনশীলতা C) রোটেশন D) সারকুলেশন উত্তর: B) সংবেদনশীলতা
-১৫. পরিণত উদ্ভিদ কোশের অভ্যন্তরস্থ একটি বৃহৎ কোশগহ্বরকে কেন্দ্র করে সমগ্র প্রোটোপ্লাজমের আবর্তনকে কী বলে? A) সারকুলেশন B) রোটেশন C) প্রকরণ চলন D) ট্যাকটিক চলন উত্তর: B)রোটেশন
-১৬. ক্ষুদ্র ক্ষুদ্র কোশগহ্বরের প্রত্যেকটিকে কেন্দ্র করে প্রোটোপ্লাজমের আবর্তনকে কী বলে? A) রোটেশন B) সারকুলেশন C) ন্যাস্টিক চলন D) গমন উত্তর: B)সারকুলেশন
-১৭. উদ্ভিদকোশের কোশগহ্বরে কোশরসের অভিস্রবণ চাপ বৃদ্ধি পেলে যে ধনাত্মক চাপের সৃষ্টি হয়, তাকে কী বলে? A) রসস্ফীতিজনিত চাপ B) বায়ুমণ্ডলীয় চাপ C) বাষ্পমোচন টান D) মূলজ চাপ উত্তর: A)রসস্ফীতিজনিত চাপ
-১৮. লজ্জাবতী লতার বিজ্ঞানসম্মত নাম কী? A) Desmodium gyrans B) Mimosa pudica C) Chlamydomonas D) Drosera উত্তর: B) Mimosa pudica
-১৯. লজ্জাবতীর পাতা স্পর্শ করলে নুয়ে পড়ে, এটি কিসের প্রভাবে ঘটে? A) আলোর প্রভাবে B) অভিকর্ষের প্রভাবে C) যান্ত্রিক উদ্দীপনা ও রসস্ফীতি চাপের হ্রাসের ফলে D) হরমোনের প্রভাবে উত্তর: C)যান্ত্রিক উদ্দীপনা ও রসস্ফীতি চাপের হ্রাসের ফলে
-২০. লজ্জাবতী লতার পাতার গোড়ায় থাকা বিশেষ স্ফীত গঠনটিকে কী বলে? A) পত্রবৃন্ত B) পালভিনাস C) মধ্যশিরা D) উপপত্র উত্তর: B)পালভিনাস
-২১. পালভিনাস নামক স্ফীত অংশটি প্রধানত কী দ্বারা গঠিত? A) জাইলেম কোশ B) ফ্লোয়েম কোশ C) মোটর কোশসমূহ D) রক্ষীকোশ উত্তর: C) মোটর কোশসমূহ
-২২. লজ্জাবতীর পাতা নুয়ে পড়ার পর পুনরায় পূর্বের অবস্থায় ফিরে আসতে প্রায় কত সময় লাগে? A) ৫ মিনিট B) ১০ মিনিট C) ২০ মিনিট D) ৩০ মিনিট উত্তর: C)২০ মিনিট
-২৩. বনচাঁড়ালের বিজ্ঞানসম্মত নাম কী? A) Mimosa pudica B) Desmodium gyrans C) Volvox D) Chlamydomonas উত্তর: B) Desmodium gyrans
-২৪. বনচাঁড়ালের পাতায় মোট কয়টি পত্রফলক থাকে? A) ১টি B) ২টি C) ৩টি (১টি বড়ো,২টি ছোটো) D) ৫টি উত্তর: C)৩টি (১টি বড়ো, ২টি ছোটো)
-২৫. বনচাঁড়াল উদ্ভিদের কোন পত্রফলক দুটি স্বতঃস্ফূর্তভাবে একটি নির্দিষ্ট ছন্দে ওঠানামা করে? A) কেন্দ্রীয় পত্রফলক B) পার্শ্বীয় ক্ষুদ্র পত্রফলক দুটি C) সবকটি পত্রফলক D) কোনোটিই নয় উত্তর: B)পার্শ্বীয় ক্ষুদ্র পত্রফলক দুটি
-২৬. কোন উদ্ভিদকে 'ভারতীয় টেলিগ্রাফ উদ্ভিদ' (Indian Telegraph Plant) বলা হয়? A) লজ্জাবতী B) সূর্যমুখী C) বনচাঁড়াল D) পদ্ম উত্তর: C) বনচাঁড়াল
-২৭. বনচাঁড়ালের পার্শ্বীয় পত্রফলকের চলন মূলত কিসের কারণে ঘটে? A) বায়ুপ্রবাহের কারণে B) অভ্যন্তরীণ উদ্দীপনার কারণে রসস্ফীতিজনিত চাপের তারতম্যে C) সূর্যালোকের কারণে D) স্পর্শের কারণে উত্তর: B)অভ্যন্তরীণ উদ্দীপনার কারণে রসস্ফীতিজনিত চাপের তারতম্যে
-২৮. আচার্য জগদীশচন্দ্র বসু উদ্ভিদের সংবেদনশীলতা প্রমাণের জন্য কোন যন্ত্র আবিষ্কার করেন? A) মাইক্রোস্কোপ B) সিসমোগ্রাফ C) ক্রেসকোগ্রাফ D) স্পেকট্রোমিটার উত্তর: C)ক্রেসকোগ্রাফ
-২৯. জগদীশচন্দ্র বসু কত খ্রিস্টাব্দে ক্রেসকোগ্রাফ যন্ত্রের সাহায্যে উদ্ভিদের সংবেদনশীলতা সর্বসমক্ষে প্রমাণ করেন? A) ১৮৯৯ B)১৯০১ C) ১৯০৫ D) ১৯১১ উত্তর: B)১৯০১
-৩০. জগদীশচন্দ্র বসু তাঁর পরীক্ষার জন্য মূলত কোন কোন উদ্ভিদ ব্যবহার করেছিলেন? A) বনচাঁড়াল ও লজ্জাবতী B) মটর ও ছোলা C) আম ও জাম D) সূর্যমুখী ও পদ্ম উত্তর: A)বনচাঁড়াল ও লজ্জাবতী
-৩১. ক্রেসকোগ্রাফ যন্ত্রটিতে কী ধরনের প্লেট ব্যবহার করা হয়েছিল? A) তামার প্লেট B) লোহার প্লেট C) কাঁচ নির্মিত ধোঁয়াটে প্লেট D) প্লাস্টিকের প্লেট উত্তর: C)কাঁচ নির্মিত ধোঁয়াটে প্লেট
-৩২. জগদীশচন্দ্র বসুর পরীক্ষায় বিষাক্ত ব্রোমাইড দ্রবণে উদ্ভিদের মূল প্রবেশ করালে ক্রেসকোগ্রাফ যন্ত্রে কী পরিবর্তন দেখা যায়? A) আলোকবিন্দুটি স্থির থাকে B) আলোকবিন্দুটি ধীরে ঘোরে C) আলোকবিন্দুটি তীব্রভাবে কম্পিত হতে থাকে এবং পরে স্থির হয় D) প্লেটটি ভেঙে যায় উত্তর: C) আলোকবিন্দুটি তীব্রভাবে কম্পিত হতে থাকে এবং পরে স্থির হয়
-৩৩. উদ্ভিদের চলনকে প্রধানত কয় ভাগে ভাগ করা যায়? A)২ ভাগে B) ৩ ভাগে C) ৪ ভাগে D) ৫ ভাগে উত্তর: B)৩ ভাগে
-৩৪. আলো, তাপমাত্রা, রাসায়নিক পদার্থ প্রভৃতি বহিঃস্থ উদ্দীপকের প্রভাবে উদ্ভিদ বা উদ্ভিদ অঙ্গের সামগ্রিক স্থান পরিবর্তনকে কী বলে? A) ট্রপিক চলন B) ন্যাস্টিক চলন C) ট্যাকটিক বা আবিষ্ট চলন D) প্রকরণ চলন উত্তর: C) ট্যাকটিক বা আবিষ্ট চলন
-৩৫. সমগ্র উদ্ভিদদেহ যখন আলোক উদ্দীপকের প্রভাবে স্থান পরিবর্তন করে, তখন তাকে কী বলে? A) ফটোট্যাকটিক চলন B) ফটোট্রপিক চলন C) ফোটোন্যাস্টিক চলন D) নিকটিন্যাস্টি চলন উত্তর: A) ফটোট্যাকটিক চলন
-৩৬. ফটোট্যাকটিক বা আলোক অভিমুখী চলন দেখা যায় এমন একটি শৈবালের নাম কী? A) স্পাইরোগাইরা B) ক্ল্যামাইডোমোনাস C) মিউকর D) পেনিসিলিয়াম উত্তর: B) ক্ল্যামাইডোমোনাস
-৩৭. ক্ল্যামাইডোমোনাস তীব্র আলোতে আলোর বিপরীত দিকে গমন করলে, তাকে কী চলন বলে? A) পজিটিভ ফটোট্যাকটিক B) প্রতীপ আলোকবর্তী চলন C) কেমোট্যাকটিক D) ন্যাস্টিক উত্তর: B)প্রতীপ আলোকবর্তী চলন
-৩৮. মসের শুক্রাণু সুক্রোজের প্রভাবে ডিম্বাণুর দিকে অগ্রসর হয়— এটি কী প্রকারের চলন? A) ফটোট্যাকটিক B) কেমোট্যাকটিক C) হাইড্রোট্রপিক D) কেমোন্যাস্টিক উত্তর: B)কেমোট্যাকটিক
-৩৯. ফার্নের শুক্রাণু ম্যালিক অ্যাসিডের প্রভাবে ডিম্বাণুর দিকে অগ্রসর হওয়া কোন চলনের উদাহরণ? A) হাইড্রোট্রপিক B) জিওট্রপিক C) কেমোট্যাকটিক D) ফটোট্যাকটিক উত্তর: C)কেমোট্যাকটিক
-৪০. ট্যাকটিক চলন মূলত উদ্দীপকের কোন বিষয়ের ওপর নির্ভর করে? A) শুধুমাত্র তীব্রতা B) শুধুমাত্র গতিপথ C) তীব্রতা ও গতিপথ উভয়ের ওপর D) কোনোটির ওপর নয় উত্তর: C) তীব্রতা ও গতিপথ উভয়ের ওপর
-৪১. উদ্দীপকের উৎসের দিকে বা উদ্দীপকের গতিপথের দিকে উদ্ভিদ অঙ্গের চলনকে কী বলে? A) ট্যাকটিক চলন B) ট্রপিক বা দিগনির্ণীত চলন C) ন্যাস্টিক চলন D) রোটেশন উত্তর: B) ট্রপিক বা দিগনির্ণীত চলন
-৪২. উদ্ভিদের ট্রপিক চলন প্রধানত কয় প্রকারের হয়? A)২ প্রকার B) ৩ প্রকার C) ৪ প্রকার D) ৫ প্রকার উত্তর: B)৩ প্রকার
-৪৩. আলোক উৎসের গতিপথ অনুসারে উদ্ভিদ অঙ্গের চলনকে কী বলে? A) ফটোট্রপিক চলন বা আলোকবৃত্তি B) হাইড্রোট্রপিক চলন C) ফোটোন্যাস্টিক চলন D) জিওট্রপিক চলন উত্তর: A)ফটোট্রপিক চলন বা আলোকবৃত্তি
-৪৪. উদ্ভিদের কাণ্ড ও শাখাপ্রশাখা আলোকরশ্মির সঙ্গে সমান্তরালভাবে বৃদ্ধি পায়, তাই এদের কী বলা হয়? A) প্রতিকূল আলোকবর্তী B) অনুকূল আলোকবর্তী C) তির্যক আলোকবর্তী D) অনুকূল জলবর্তী উত্তর: B)অনুকূল আলোকবর্তী
-৪৫. উদ্ভিদের মূল সর্বদা আলোক উৎসের বিপরীত দিকে অগ্রসর হয়,তাই মূলকে কী বলে? A) অনুকূল আলোকবর্তী B) প্রতিকূল আলোকবর্তী C) তির্যক আলোকবর্তী D) প্রতিকূল অভিকর্ষবর্তী উত্তর: B) প্রতিকূল আলোকবর্তী
-৪৬. উদ্ভিদের পাতা আলোকরশ্মির সঙ্গে তির্যকভাবে বৃদ্ধি পাওয়ায় পাতাকে কী বলে? A) অনুকূল আলোকবর্তী B) প্রতিকূল আলোকবর্তী C) তির্যক আলোকবর্তী D) তির্যক অভিকর্ষবর্তী উত্তর: C) তির্যক আলোকবর্তী
-৪৭. অন্ধকার ঘরে জানলার সামনে একটি গাছ রাখলে তার বিটপ অংশ জানলার দিকে বেঁকে বৃদ্ধি পায়— এটি কোন চলনের উদাহরণ? A) ফটোট্রপিক চলন B) হাইড্রোট্রপিক চলন C) জিওট্রপিক চলন D) ফোটোন্যাস্টিক চলন উত্তর: A)ফটোট্রপিক চলন
-৪৮. জলের উৎসের গতিপথ অনুসারে উদ্ভিদ অঙ্গের চলনকে কী বলে? A) ফটোট্রপিক চলন B) হাইড্রোট্রপিক চলন বা জলবৃত্তি C) জিওট্রপিক চলন D) কেমোট্রপিক চলন উত্তর: B)হাইড্রোট্রপিক চলন বা জলবৃত্তি
-৪৯. উদ্ভিদের মূল সর্বদা জলের উৎসের দিকে বৃদ্ধি পায়,তাই মূলকে কী বলে? A) প্রতিকূল জলবর্তী B) অনুকূল জলবর্তী C) অনুকূল অভিকর্ষবর্তী D) তির্যক জলবর্তী উত্তর: B)অনুকূল জলবর্তী
-৫০. উদ্ভিদের কাণ্ড জলের উৎসের বিপরীত দিকে বৃদ্ধি পায়,একে কী বলে? A) অনুকূল জলবর্তী B) প্রতিকূল জলবর্তী C) প্রতিকূল আলোকবর্তী D) অনুকূল অভিকর্ষবর্তী উত্তর: B)প্রতিকূল জলবর্তী
-৫১. হাইড্রোট্রপিক চলনের পরীক্ষার জন্য চালুনির মধ্যে কী রাখা হয়? A) ভিজে মাটি B) ভিজে তুলো C) ভিজে কাঠের গুঁড়ো D) শুকনো বালি উত্তর: C)ভিজে কাঠের গুঁড়ো
-৫২. হাইড্রোট্রপিক চলনের পরীক্ষায় চালুনির ছিদ্র দিয়ে ভ্রূণমূল প্রথমে নিচের দিকে বেরিয়ে আসে কেন? A) আলোর টানে B) জলের টানে C) অভিকর্ষের টানে D) বাতাসের টানে উত্তর: C)অভিকর্ষের টানে
-৫৩. হাইড্রোট্রপিক চলনের পরীক্ষায় নিচের দিকে বেরিয়ে আসা ভ্রূণমূল পুনরায় বেঁকে চালুনির ছিদ্র দিয়ে ভেতরে প্রবেশ করে কেন? A) আলোর আকর্ষণে B) কাঠের গুঁড়োয় থাকা জলের আকর্ষণে C) রাসায়নিক পদার্থের আকর্ষণে D) তাপের কারণে উত্তর: B) কাঠের গুঁড়োয় থাকা জলের আকর্ষণে
-৫৪. মাধ্যাকর্ষণ শক্তির প্রভাবে অভিকর্ষের গতিপথ অনুসারে উদ্ভিদ অঙ্গের চলনকে কী বলে? A) ফটোট্রপিক চলন B) হাইড্রোট্রপিক চলন C) জিওট্রপিক চলন বা অভিকর্ষবৃত্তি D) কেমোট্রপিক চলন উত্তর: C)জিওট্রপিক চলন বা অভিকর্ষবৃত্তি
-৫৫. উদ্ভিদের মূল পৃথিবীর ভরকেন্দ্রের দিকে অগ্রসর হয়,একে কী বলে? A) অনুকূল অভিকর্ষবর্তী B) প্রতিকূল অভিকর্ষবর্তী C) তির্যক অভিকর্ষবর্তী D) অনুকূল আলোকবর্তী উত্তর: A) অনুকূল অভিকর্ষবর্তী
-৫৬. উদ্ভিদের কাণ্ড মাটির ওপরে পৃথিবীর ভরকেন্দ্রের বিপরীত দিকে বৃদ্ধি পায়, একে কী বলে? A) অনুকূল অভিকর্ষবর্তী B) প্রতিকূল অভিকর্ষবর্তী C) তির্যক অভিকর্ষবর্তী D) প্রতিকূল আলোকবর্তী উত্তর: B) প্রতিকূল অভিকর্ষবর্তী
-৫৭. পার্শ্বীয় মূল পৃথিবীর ভরকেন্দ্রের সঙ্গে লম্বভাবে বা তির্যকভাবে বৃদ্ধি পায়, একে কী বলে? A) অনুকূল অভিকর্ষবর্তী B) প্রতিকূল অভিকর্ষবর্তী C) তির্যক অভিকর্ষবর্তী D) তির্যক আলোকবর্তী উত্তর: C) তির্যক অভিকর্ষবর্তী
-৫৮. জিওট্রপিক চলনের পরীক্ষায় একটি পেট্রিডিশে কিসের ওপর সদ্য অঙ্কুরিত বীজ আটকে রাখা হয়? A) ভিজে কাঠের গুঁড়ো B) ভিজে তুলোর প্যাড C) শুকনো মাটি D) ফিল্টার পেপার উত্তর: B)ভিজে তুলোর প্যাড
-৫৯. জিওট্রপিক চলনের পরীক্ষায় বীজের অবস্থান যেমনই হোক না কেন, ভ্রূণমূল সর্বদা কোন দিকে বৃদ্ধি পায়? A) ওপরের দিকে B) পাশের দিকে C) পৃথিবীর ভরকেন্দ্রের দিকে (নিচের দিকে) D) আলোর দিকে উত্তর: C) পৃথিবীর ভরকেন্দ্রের দিকে (নিচের দিকে)
-৬০. সুন্দরী গাছের শ্বাসমূল মাটির ওপরের দিকে বৃদ্ধি পায়,এটি কোন চলনের উদাহরণ? A) অনুকূল অভিকর্ষবর্তী B) প্রতিকূল অভিকর্ষবর্তী C) তির্যক অভিকর্ষবর্তী D) হাইড্রোট্রপিক উত্তর: B) প্রতিকূল অভিকর্ষবর্তী
-৬১. পরাগযোগের পর ডিম্বকের দিকে পরাগনালির বৃদ্ধি কী প্রকার চলনের উদাহরণ? A) জিওট্রপিক চলন B) কেমোট্রপিক চলন C) ফটোট্রপিক চলন D) কেমোন্যাস্টিক চলন উত্তর: B)কেমোট্রপিক চলন
-৬২. ট্রপিক চলন প্রধানত কোন হরমোন দ্বারা প্রভাবিত হয়? A) জিব্বেরেলিন B) সাইটোকাইনিন C) অক্সিন D) ইথিলিন উত্তর: C) অক্সিন
-৬৩. ট্রপিক চলন উদ্দীপকের কোন বিষয়ের ওপর নির্ভর করে নিয়ন্ত্রিত হয়? A) উদ্দীপকের তীব্রতা B) উদ্দীপকের উৎসের গতিপথ C) তীব্রতা ও গতিপথ উভয় D) কোনোটিই নয় উত্তর: B) উদ্দীপকের উৎসের গতিপথ
-৬৪. ট্রপিক চলন কি ধরনের চলন? A) সামগ্রিক চলন B) বক্র চলন C) রোটেশন D) গমন উত্তর: B)বক্র চলন
-৬৫. উদ্ভিদের কাণ্ড আলোর দিকে বেঁকে যাওয়া হলো— A) অনুকূল আলোকবর্তী চলন B) প্রতিকূল আলোকবর্তী চলন C) প্রতিকূল অভিকর্ষবর্তী চলন D) A ও C উভয়ই উত্তর: D) A ও C উভয়ই
-৬৬. উদ্ভিদ অঙ্গের চলন যখন উদ্দীপকের গতিপথ অনুসারে নিয়ন্ত্রিত না হয়ে উদ্দীপকের তীব্রতার ওপর নির্ভর করে, তখন তাকে কী বলে? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন বা ব্যাপ্তি চলন D) জিওট্রপিক চলন উত্তর: C) ন্যাস্টিক চলন বা ব্যাপ্তি চলন
-৬৭. ন্যাস্টিক চলন কিসের ওপর নির্ভর করে? A) উদ্দীপকের গতিপথ B) উদ্দীপকের তীব্রতা C) হরমোন D) অভিকর্ষ উত্তর: B) উদ্দীপকের তীব্রতা
-৬৮. উদ্ভিদ অঙ্গের সঞ্চালন যখন সূর্যালোকের তীব্রতার দ্বারা নিয়ন্ত্রিত হয়, তখন তাকে কী বলে? A) ফোটোন্যাস্টিক বা আলোক ব্যাপ্তি B) থার্মোন্যাস্টিক C) সিসমোন্যাস্টিক D) ফটোট্রপিক উত্তর: A) ফোটোন্যাস্টিক বা আলোক ব্যাপ্তি
-৬৯. পদ্ম ও সূর্যমুখী ফুল দিনের আলোতে ফোটে এবং কম আলোতে মুদে যায়— এটি কোন চলন? A) নেগেটিভ ফোটোন্যাস্টিক B) পজিটিভ ফোটোন্যাস্টিক C) থার্মোন্যাস্টিক D) কেমোন্যাস্টিক উত্তর: B)পজিটিভ ফোটোন্যাস্টিক
-৭০. সন্ধ্যামালতী ও জুঁই ফুল কম আলোতে (রাত্রিতে) ফোটে— এটি কোন চলন? A) পজিটিভ ফোটোন্যাস্টিক B) নেগেটিভ ফোটোন্যাস্টিক C) থার্মোন্যাস্টিক D) সিসমোন্যাস্টিক উত্তর: B)নেগেটিভ ফোটোন্যাস্টিক
-৭১. সূর্যমুখী ফুলের সূর্যের অবস্থানের ওপর নির্ভর করে দিক পরিবর্তন করাকে কী বলা যায়? A) হেলিওট্রপিক চলন B) জিওট্রপিক চলন C) হাইড্রোট্রপিক চলন D) থার্মোন্যাস্টিক চলন উত্তর: A)হেলিওট্রপিক চলন
-৭২. উদ্ভিদ অঙ্গের সঞ্চালন যখন উষ্ণতার তীব্রতার দ্বারা নিয়ন্ত্রিত হয়, তখন তাকে কী বলে? A) ফোটোন্যাস্টিক B) থার্মোন্যাস্টিক বা তাপব্যাপ্তি C) সিসমোন্যাস্টিক D) কেমোন্যাস্টিক উত্তর: B) থার্মোন্যাস্টিক বা তাপব্যাপ্তি
-৭৩. টিউলিপ ফুলের পাপড়ি অধিক তাপে খোলে এবং কম তাপে মুদে যায়— এটি কোন চলনের উদাহরণ? A) ফোটোন্যাস্টিক B) কেমোন্যাস্টিক C) থার্মোন্যাস্টিক D) নিকটিন্যাস্টি উত্তর: C)থার্মোন্যাস্টিক
-৭৪. স্পর্শ, ঘর্ষণ, আঘাত, বায়ুপ্রবাহ প্রভৃতি উদ্দীপকের তীব্রতার প্রভাবে ঘটা ন্যাস্টিক চলনকে কী বলে? A) ফোটোন্যাস্টিক B) থার্মোন্যাস্টিক C) সিসমোন্যাস্টিক বা স্পর্শব্যাপ্তি D) কেমোন্যাস্টিক উত্তর: C)সিসমোন্যাস্টিক বা স্পর্শব্যাপ্তি
-৭৫. লজ্জাবতী লতার পাতা স্পর্শ করা মাত্র পত্রকগুলি নুয়ে পড়া কোন চলনের উদাহরণ? A) কেমোন্যাস্টিক B) থার্মোন্যাস্টিক C) সিসমোন্যাস্টিক D) ফোটোন্যাস্টিক উত্তর: C)সিসমোন্যাস্টিক
-৭৬. সিসমোন্যাস্টিক চলনে পাতা নুয়ে পড়ার মূল কারণ কী? A) হরমোনের অভাব B) পালভিনাস থেকে জল অন্য কোশে চলে গিয়ে রসস্ফীতি চাপ কমে যাওয়া C) অভিকর্ষের প্রভাব D) আলোর তীব্রতা উত্তর: B) পালভিনাস থেকে জল অন্য কোশে চলে গিয়ে রসস্ফীতি চাপ কমে যাওয়া
-৭৭. কোনো রাসায়নিক পদার্থের সংস্পর্শে উদ্ভিদ অঙ্গের যে সঞ্চালন বা চলন ঘটে, তাকে কী বলে? A) সিসমোন্যাস্টিক B) কেমোন্যাস্টিক বা রসায়ন ব্যাপ্তি C) থার্মোন্যাস্টিক D) ফটোট্যাকটিক উত্তর: B)কেমোন্যাস্টিক বা রসায়ন ব্যাপ্তি
-৭৮. নিচের কোনটি কেমোন্যাস্টিক চলনের উদ্দীপক হিসেবে কাজ করতে পারে? A) প্রোটিন, ইথার, ক্লোরোফর্ম B) আলো ও তাপ C) অভিকর্ষ ও জল D) স্পর্শ ও ঘর্ষণ উত্তর: A)প্রোটিন, ইথার, ক্লোরোফর্ম
-৭৯. পতঙ্গভুক উদ্ভিদ সূর্যশিশিরের পাতার কর্ষিকাগুিল পতঙ্গের প্রোটিন সংস্পর্শে বেঁকে যায়— এটি কোন চলন? A) থার্মোন্যাস্টিক B) ফোটোন্যাস্টিক C) কেমোন্যাস্টিক D) সিসমোন্যাস্টিক উত্তর: C)কেমোন্যাস্টিক
-৮০. উদ্ভিদ অঙ্গের চলন যখন আলো ও তাপ উভয়ের প্রভাবে ঘটে,তখন তাকে কী বলে? A) সিসমোন্যাস্টিক B) নিকটিন্যাস্টি চলন C) থার্মোন্যাস্টিক D) ফটোট্রপিক উত্তর: B) নিকটিন্যাস্টি চলন
-৮১. তেঁতুল গাছের পাতা দিনের বেলায় আলো ও তাপের প্রভাবে খুলে যায় এবং রাত্রে মুদে যায়— এটি কোন চলন? A) নিকটিন্যাস্টি চলন B) কেমোন্যাস্টিক C) হাইড্রোট্রপিক D) সিসমোন্যাস্টিক উত্তর: A)নিকটিন্যাস্টি চলন
-৮২. ন্যাস্টিক চলনে উদ্ভিদ অঙ্গের কীরূপ পরিবর্তন ঘটে? A) সামগ্রিক স্থান পরিবর্তন B) বক্র চলন (সামগ্রিক স্থান পরিবর্তন হয় না) C) মূলের বৃদ্ধি D) কাণ্ডের বৃদ্ধি উত্তর: B)বক্র চলন (সামগ্রিক স্থান পরিবর্তন হয় না)
-৮৩. ন্যাস্টিক চলনে কোন হরমোনের প্রভাব থাকে না? A) অক্সিন B) জিব্বেরেলিন C) কাইনিন D) সবকটি উত্তর: A)অক্সিন
-৮৪. কোন প্রকার চলনে উদ্ভিদের সামগ্রিক স্থান পরিবর্তন ঘটে? A) ট্রপিক চলন B) ন্যাস্টিক চলন C) ট্যাকটিক চলন D) প্রকরণ চলন উত্তর: C) ট্যাকটিক চলন
-৮৫. ট্রপিক চলনে উদ্ভিদের সামগ্রিক স্থান পরিবর্তন হয় কি? A) হ্যাঁ, হয় B) না, এটি একপ্রকার বক্র চলন C) শুধুমাত্র মূলের হয় D) শুধুমাত্র পাতার হয় উত্তর: B)না, এটি একপ্রকার বক্র চলন
-৮৬. উদ্দীপকের তীব্রতা ও গতিপথ উভয়ের প্রভাবে ঘটে কোন চলন? A) ট্রপিক চলন B) ন্যাস্টিক চলন C) ট্যাকটিক চলন D) সিসমোন্যাস্টিক চলন উত্তর: C) ট্যাকটিক চলন
-৮৭. ন্যাস্টিক চলনের ক্ষেত্রে নিচের কোনটি সঠিক? A) উদ্দীপকের গতিপথের ওপর নির্ভর করে B) উদ্দীপকের তীব্রতার ওপর নির্ভর করে, কিন্তু গতিপথের ওপর নয় C) উদ্দীপকের তীব্রতা ও গতিপথ উভয়ের ওপর নির্ভর করে D) হরমোন দ্বারা নিয়ন্ত্রিত হয় উত্তর: B) উদ্দীপকের তীব্রতার ওপর নির্ভর করে, কিন্তু গতিপথের ওপর নয়
-৮৮. ট্রপিক চলন কোন হরমোন দ্বারা প্রভাবিত হয়? A) সাইটোকাইনিন B) জিব্বেরেলিন C) অক্সিন D) ইথিলিন উত্তর: C)অক্সিন
-৮৯. ট্যাকটিক চলনে অক্সিন হরমোনের ভূমিকা কী? A) এটি চলন বৃদ্ধি করে B) এটি চলনে বাধা দেয় C) এর দ্বারা প্রভাবিত হয় না D) এটি আলোর দিকে কাণ্ডকে বাঁকায় উত্তর: C) এর দ্বারা প্রভাবিত হয় না
-৯০. শৈবালের (যেমন- ভলভক্স) আলোর দিকে চলন কোন প্রকার চলনের উদাহরণ? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন D) হাইড্রোট্রপিক চলন উত্তর: A)ট্যাকটিক চলন
-৯১. উদ্ভিদ অঙ্গের আলোর উৎসের দিকে চলন (যেমন- কাণ্ডের চলন) কোন প্রকার চলনের উদাহরণ? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন D) থার্মোন্যাস্টিক চলন উত্তর: B)ট্রপিক চলন
-৯২. স্পর্শ করলে লজ্জাবতীর পাতা মুদে যায়— এটি কোন প্রকার চলনের উদাহরণ? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন D) কেমোট্যাকটিক চলন উত্তর: C)ন্যাস্টিক চলন
-৯৩. জিওট্রপিক চলন নিচের কোনটির প্রকারভেদ? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন D) কেমোন্যাস্টিক চলন উত্তর: B)ট্রপিক চলন
-৯৪. কেমোট্যাকটিক চলন নিচের কোনটির প্রকারভেদ? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন D) হাইড্রোট্রপিক চলন উত্তর: A)ট্যাকটিক চলন
-৯৫. ফোটোন্যাস্টিক চলন নিচের কোনটির প্রকারভেদ? A) ট্যাকটিক চলন B) ট্রপিক চলন C) ন্যাস্টিক চলন D) ফটোট্যাকটিক চলন উত্তর: C)ন্যাস্টিক চলন
-৯৬. উদ্ভিদের বক্র চলন বলতে কোন দুটি চলনকে বোঝানো হয়? A) ট্যাকটিক ও ট্রপিক B) ট্রপিক ও ন্যাস্টিক C) ট্যাকটিক ও ন্যাস্টিক D) ফটোট্যাকটিক ও কেমোট্যাকটিক উত্তর: B)ট্রপিক ও ন্যাস্টিক
-৯৭. উদ্ভিদ চলনের প্রধান কারণ কী? A) শুধুমাত্র অভ্যন্তরীণ বৃদ্ধি B) উদ্দীপকের প্রভাবে উপযুক্ত সাড়া প্রদান C) বায়ুর চাপ D) শুধুমাত্র জলের প্রবাহ উত্তর: B)উদ্দীপকের প্রভাবে উপযুক্ত সাড়া প্রদান
-৯৮. কেমোন্যাস্টিক চলন দেখা যায় এমন একটি উদ্ভিদের নাম কী? A) লজ্জাবতী B) সূর্যশিশির C) বনচাঁড়াল D) তেঁতুল উত্তর: B) সূর্যশিশির
-৯৯. হাইড্রোট্রপিক চলনে উদ্ভিদের কাণ্ড কী প্রকৃতির হয়? A) অনুকূল জলবর্তী B) প্রতিকূল জলবর্তী C) তির্যক জলবর্তী D) ধনাত্মক জলবর্তী উত্তর: B)প্রতিকূল জলবর্তী
-১০০. ট্রপিক চলনে অক্সিন হরমোনের ভূমিকা প্রমাণ করে যে— A) ট্রপিক চলন একটি সামগ্রিক চলন B) ট্রপিক চলন হরমোন-স্বাধীন C) ট্রপিক চলন হরমোন দ্বারা প্রভাবিত হয় D) ট্রপিক চলন শুধুমাত্র তীব্রতার ওপর নির্ভর করে উত্তর: C) ট্রপিক চলন হরমোন দ্বারা প্রভাবিত হয়
-_T2_
-১. জীবদেহে কোশে কোশে রাসায়নিক সংযোগ গড়ে তোলার জন্য রাসায়নিক সমন্বয়কারী (Chemical coordinator) হিসেবে কে কাজ করে? A) উৎসেচক B) হরমোন C) ভিটামিন D) খনিজ লবণ উত্তর: B) হরমোন
-২. ১৯০৫ খ্রিস্টাব্দে কারা প্রথম রাসায়নিক সমন্বয়ক পদার্থটিকে 'হরমোন' নামে অভিহিত করেন? A) ডারউইন ও ভেন্ট B) বোস ও রামন C) বেলিস ও স্টারলিং D) রিচমন্ড ও ল্যাং উত্তর: C) বেলিস ও স্টারলিং
-৩. 'হরমোন' শব্দটি কোন্ গ্রিক শব্দ থেকে উৎপন্ন হয়েছে? A) হরমাও (Hormao) B) হরমোস (Hormos) C) হরমো (Hormo) D) হারমোনি (Harmony) উত্তর: A)হরমাও (Hormao)
-৪. গ্রিক শব্দ 'হরমাও' (Hormao)-এর অর্থ কী? A) ধ্বংস করা B) জাগ্রত করা বা উত্তেজিত করা C) বৃদ্ধি পাওয়া D) শান্ত করা উত্তর: B) জাগ্রত করা বা উত্তেজিত করা
-৫. ১৮৮১ খ্রিস্টাব্দে আলোকবৃত্তি পরীক্ষার মাধ্যমে উদ্ভিদদেহে হরমোনের উপস্থিতি প্রথম কে প্রমাণ করেন? A) চার্লস ডারউইন B) বিজ্ঞানী ভেন্ট C) জগদীশচন্দ্র বসু D) কুরোশোয়া উত্তর: A) চার্লস ডারউইন
-৬. ১৯২৮ খ্রিস্টাব্দে উদ্ভিদের মুকুলারবণী থেকে প্রথম 'অক্সিন' নামক হরমোন আবিষ্কার করেন কে? A) চার্লস ডারউইন B) বিজ্ঞানী ভেন্ট C) বেলিস D) রিচমন্ড উত্তর: B) বিজ্ঞানী ভেন্ট
-৭. উদ্ভিদ হরমোনকে অপর কী নামে ডাকা হয়? A) জ়ু-হরমোন B) ফাইটোহরমোন C) লোকাল হরমোন D) নিউরোহরমোন উত্তর: B) ফাইটোহরমোন
-৮. উদ্ভিদ হরমোনের প্রধান উৎপত্তিস্থল বা উৎসস্থল কোনটি? A) কাণ্ড ও মূলের অগ্রস্থ ভাজক কলা B) স্থায়ী কলা C) জাইলেম কলা D) ফ্লোয়েম কলা উত্তর: A) কাণ্ড ও মূলের অগ্রস্থ ভাজক কলা
-৯. উদ্ভিদ হরমোন কীভাবে এক কোশ থেকে অন্য কোশান্তরে পরিবাহিত হয়? A) অভিস্রবণ প্রক্রিয়ায় B) ব্যাপন প্রক্রিয়ায় C) সক্রিয় পরিবহণে D) বাষ্পমোচনের মাধ্যমে উত্তর: B) ব্যাপন প্রক্রিয়ায়
-১০. উদ্ভিদ হরমোন প্রধানত কোন্ কলার মাধ্যমে পরিবাহিত হয়? A) প্যারেনকাইমা B)জাইলেম ও ফ্লোয়েম C) কোলেনকাইমা D) স্ক্লেরেনকাইমা উত্তর: B) জাইলেম ও ফ্লোয়েম
-১১. হরমোন তার নির্দিষ্ট কাজ সম্পন্ন করার পর কী অবস্থায় থাকে? A) কোশে সঞ্চিত থাকে B) উৎসেচকে পরিণত হয় C) ধ্বংসপ্রাপ্ত হয় D) পুনরায় উৎপত্তিস্থলে ফিরে যায় উত্তর: C) ধ্বংসপ্রাপ্ত হয়
-১২. অক্সিন হরমোন আলোর উপস্থিতিতে কোন্ উৎসেচকের ক্রিয়ায় বিনষ্ট হয়? A) আলফা অ্যামাইলেজ B) ইন্ডোল অ্যাসিটিক অ্যাসিড অক্সিডেজ C) লাইপেজ D) জিব্বেরেলিক অ্যাসিড অক্সিডেজ উত্তর: B)ইন্ডোল অ্যাসিটিক অ্যাসিড অক্সিডেজ
-১৩. হরমোন ও উৎসেচকের মধ্যে উৎপত্তিস্থলগত পার্থক্য কী? A) হরমোন সজীব কোশে উৎপন্ন হয়, উৎসেচক অনাল গ্রন্থিতে। B) হরমোন অনাল গ্রন্থির কোশে উৎপন্ন হয়, উৎসেচক সমস্ত সজীব কোশে উৎপন্ন হয়। C) হরমোন ও উৎসেচক উভয়েই অনাল গ্রন্থিতে উৎপন্ন হয়। D) কোনোটিই নয়। উত্তর: B) হরমোন অনাল গ্রন্থির কোশে উৎপন্ন হয়, উৎসেচক সমস্ত সজীব কোশে উৎপন্ন হয়।
-১৪. হরমোন ও উৎসেচকের ক্রিয়াস্থল সংক্রান্ত পার্থক্য কোনটি? A) হরমোন সাধারণত উৎপত্তিস্থলে ক্রিয়া করে না, উৎসেচক উৎপত্তিস্থলে ও অন্যত্র ক্রিয়া করে। B) হরমোন সর্বদা উৎপত্তিস্থলে ক্রিয়া করে। C) উৎসেচক শুধুমাত্র উৎপত্তিস্থলে ক্রিয়া করে। D) হরমোন এবং উৎসেচক উভয়েই শুধুমাত্র উৎপত্তিস্থলে ক্রিয়া করে। উত্তর: A) হরমোন সাধারণত উৎপত্তিস্থলে ক্রিয়া করে না, উৎসেচক উৎপত্তিস্থলে ও অন্যত্র ক্রিয়া করে।
-১৫. ক্রিয়ার পর হরমোন ও উৎসেচকের পরিণতি কী হয়? A) উভয়েই ধ্বংসপ্রাপ্ত হয়। B) উভয়েই অক্ষত থাকে। C) হরমোন ধ্বংসপ্রাপ্ত হয়, উৎসেচক ধ্বংস হয় না। D) হরমোন ধ্বংস হয় না, উৎসেচক ধ্বংসপ্রাপ্ত হয়। উত্তর: C) হরমোন ধ্বংসপ্রাপ্ত হয়, উৎসেচক ধ্বংস হয় না।
-১৬. অক্সিন হরমোনের রাসায়নিক নাম কী? A) জিব্বেরেলিক অ্যাসিড (GA) B) ইন্ডোল অ্যাসিটিক অ্যাসিড (IAA) C) অ্যাবসিসিক অ্যাসিড (ABA) D) ন্যাপথালিন অ্যাসিটিক অ্যাসিড (NAA) উত্তর: B) ইন্ডোল অ্যাসিটিক অ্যাসিড (IAA)
-১৭. অক্সিন হরমোনের রাসায়নিক সংকেত কোনটি? A) $C_{19}H_{22}O_6$ B) $C_{10}H_9O_2N$ C) $C_{10}H_9N_5O$ D) $C_2H_4$ উত্তর: B) $C_{10}H_9O_2N$
-১৮. অক্সিন হরমোন প্রধানত কোন্ উপাদানগুলি নিয়ে গঠিত? A) কার্বন, হাইড্রোজেন ও অক্সিজেন B) কার্বন, হাইড্রোজেন, অক্সিজেন ও নাইট্রোজেন C) কার্বন, অক্সিজেন ও নাইট্রোজেন D) হাইড্রোজেন, অক্সিজেন ও নাইট্রোজেন উত্তর: B) কার্বন, হাইড্রোজেন, অক্সিজেন ও নাইট্রোজেন
-১৯. অক্সিন কোন্ অ্যামাইনো অ্যাসিড থেকে সংশ্লেষিত হয়? A) ট্রিপটোফ্যান (Tryptophan) B) টাইরোসিন C) গ্লাইসিন D) লিউসিন উত্তর: A) ট্রিপটোফ্যান (Tryptophan)
-২০. অক্সিনের ক্রিয়া কোন্ পরিবেশে ভালো হয়? A) তীব্র আলোতে B) অন্ধকারে C) উচ্চ তাপমাত্রায় D) জলীয় বাষ্পে উত্তর: B) অন্ধকারে
-২১. নিচের কোনটি একটি প্রাকৃতিক অক্সিনের (Natural Auxin) উদাহরণ? A) 2,4-D B) NAA C) ইন্ডোল বিউটারিক অ্যাসিড (IBA) D) IPA উত্তর: C) ইন্ডোল বিউটারিক অ্যাসিড (IBA)
-২২. নিচের কোনটি একটি কৃত্রিম অক্সিনের উদাহরণ নয়? A) ইন্ডোল প্রোপায়নিক অ্যাসিড (IPA) B) ইন্ডোল অ্যাসিটিক অ্যাসিড (IAA) C) ন্যাপথালিন অ্যাসিটিক অ্যাসিড (NAA) D) 2,4-D উত্তর: B) ইন্ডোল অ্যাসিটিক অ্যাসিড (IAA)
-২৩. উদ্ভিদের অগ্রমুকুলের উপস্থিতিতে কাক্ষিক মুকুলের বৃদ্ধি বাধাপ্রাপ্ত হওয়ার ঘটনাকে কী বলে? A) পার্থেনোকার্পি B) ট্রপিক চলন C) অগ্রস্থ প্রকটতা (Apical dominance) D) রিচমন্ড-ল্যাং প্রভাব উত্তর: C) অগ্রস্থ প্রকটতা (Apical dominance)
-২৪. অগ্রস্থ প্রকটতা ঘটায় এবং পার্শ্বীয় মুকুলের বৃদ্ধি ব্যাহত করে কোন্ হরমোন? A) জিব্বেরেলিন B) সাইটোকাইনিন C) ইথিলিন D) অক্সিন উত্তর: D) অক্সিন
-২৫. গাছের অগ্রমুকুল কেটে বাদ দিলে কী ঘটে? A) গাছ মরে যায় B) কাক্ষিক মুকুলের সংখ্যা ও বৃদ্ধি ঘটে এবং শাখাপ্রশাখা সৃষ্টি হয় C) মূলের বৃদ্ধি বন্ধ হয় D) ফুল ফোটে না উত্তর: B) কাক্ষিক মুকুলের সংখ্যা ও বৃদ্ধি ঘটে এবং শাখাপ্রশাখা সৃষ্টি হয়
-২৬. কোশ বিভাজন এবং কোশের আয়তন বৃদ্ধিতে প্রধান ভূমিকা পালন করে কোন্ হরমোন? A) অক্সিন B) ইথিলিন C) অ্যাবসিসিক অ্যাসিড D) ফ্লোরিজেন উত্তর: A) অক্সিন
-২৭. অক্সিন কোশের ভেতরে কী সৃষ্টি করে কোশের আয়তন বৃদ্ধি ঘটায়? A) ক্লোরোপ্লাস্ট B) কোশগহ্বর (vacuole) C) নিউক্লিয়াস D) মাইটোকনড্রিয়া উত্তর: B) কোশগহ্বর (vacuole)
-২৮. লঘু ঘনত্বের অক্সিন উদ্ভিদের কোন্ অংশের বৃদ্ধিতে সাহায্য করে? A) কাণ্ড B) পাতা C) মূল D) ফুল উত্তর: C) মূল
-২৯. পরাগযোগ ও নিষেকের পর ডিম্বাশয়ে কোন্ হরমোনের পরিমাণ বেড়ে যাওয়ায় তা ফলে পরিণত হয়? A) জিব্বেরেলিন B) সাইটোকাইনিন C) অক্সিন D) ফ্লোরিজেন উত্তর: C) অক্সিন
-৩০. নিষেক ছাড়াই বীজবিহীন ফল সৃষ্টি হওয়ার প্রক্রিয়াকে কী বলে? A) পার্থেনোজেনেসিস B) পার্থেনোকার্পি C) অগ্রস্থ প্রকটতা D) অ্যাপোমিক্সিস উত্তর: B) পার্থেনোকার্পি
-৩১. পার্থেনোকার্পি বা বীজবিহীন ফল সৃষ্টিতে সাহায্য করে কোন্ হরমোন? A) সাইটোকাইনিন B) জিব্বেরেলিন C) ইথিলিন D) অক্সিন উত্তর: D) অক্সিন
-৩২. উদ্ভিদের ফটোট্রপিক ও জিওট্রপিক চলন নিয়ন্ত্রণে বিশেষ ভূমিকা গ্রহণ করে কোন্ হরমোন? A) অক্সিন B) কাইনিন C) জিব্বেরেলিন D) ডরমিন উত্তর: A) অক্সিন
-৩৩. ফটোট্রপিক চলনের সময় কাণ্ডে অক্সিন আলোর উৎসের কোন্ দিকে বেশি মাত্রায় সঞ্চিত হয়? A) আলোর দিকে B) আলোর বিপরীত দিকে (অন্ধকার অংশে) C) উভয় দিকে সমানভাবে D) একেবারে অগ্রভাগে উত্তর: B) আলোর বিপরীত দিকে (অন্ধকার অংশে)
-৩৪. মূলের ক্ষেত্রে স্বল্প পরিমাণ অক্সিন কী প্রভাব ফেলে? A) কোশ বিভাজন বন্ধ করে B) কোশ দ্রুত বিভাজিত হয় C) মূল শুকিয়ে যায় D) মূল আলোর দিকে বেঁকে যায় উত্তর: B)কোশ দ্রুত বিভাজিত হয়
-৩৫. অভিকর্ষের প্রভাবে অক্সিন উদ্ভিদের বিটপ ও মূলের কোথায় বেশি মাত্রায় সঞ্চিত হয়? A) অগ্রভাগে B) পশ্চাৎভাগে C) নিম্নমুখে বা নিচের দিকে D) ওপরের দিকে উত্তর: C) নিম্নমুখে বা নিচের দিকে
-৩৬. অক্সিন হরমোন উদ্ভিদের নিউক্লিয়াসের কী নিয়ন্ত্রণ করে? A) ধ্বংস B) বিভাজন C) সংকোচন D) প্রসারণ উত্তর: B) বিভাজন
-৩৭. ১৯২১ খ্রিস্টাব্দে জিব্বেরেলিন হরমোনের উপস্থিতি প্রথম লক্ষ করেন কোন্ বিজ্ঞানী? A) ভেন্ট B) ডারউইন C) কুরোশোয়া (Kurosawa) D) রিচমন্ড উত্তর: C) কুরোশোয়া (Kurosawa)
-৩৮. জিব্বেরেলিন প্রথম কোন্ জীব থেকে আবিষ্কৃত হয়? A) ব্যাকটেরিয়া B) শৈবাল C) ছত্রাক D) ভাইরাস উত্তর: C) ছত্রাক
-৩৯. জিব্বেরেলিন নিঃসরণকারী ছত্রাকটির নাম কী? A) পেনিসিলিয়াম B) জিব্বেরেলা ফুজিকুরোই (Gibberella fujikuroi) C) অ্যাগারিকাস D) মিউকর উত্তর: B) জিব্বেরেলা ফুজিকুরোই (Gibberella fujikuroi)
-৪০. জিব্বেরেলিনের রাসায়নিক নাম কী? A) জিব্বেরেলিক অ্যাসিড (GA) B) ইন্ডোল অ্যাসিটিক অ্যাসিড (IAA) C) অ্যাবসিসিক অ্যাসিড D) জিব্বেরেলিন প্রোটিন উত্তর: A) জিব্বেরেলিক অ্যাসিড (GA)
-৪১. জিব্বেরেলিন হরমোনের রাসায়নিক প্রকৃতি কীরূপ? A) প্রোটিনধর্মী B)স্টেরয়েডধর্মী C) টারপিনয়েড গোষ্ঠীর জৈব অম্ল D) পিউরিন জাতীয় ক্ষারীয় উত্তর: C) টারপিনয়েড গোষ্ঠীর জৈব অম্ল
-৪২. জিব্বেরেলিন হরমোনের প্রধান উৎপত্তিস্থল বা উৎস কোনটি? A) কাণ্ডের অগ্রভাগ B) উদ্ভিদের পরিপক্ব বীজ, অঙ্কুরিত চারাগাছ ও মুকুল C) নারকেলের জল D) মূলের অগ্রভাগ উত্তর: B) উদ্ভিদের পরিপক্ব বীজ, অঙ্কুরিত চারাগাছ ও মুকুল
-৪৩. প্রধান প্রাকৃতিক জিব্বেরেলিন কোনটি? A) GA1 B) GA2 C) GA3 D) GA4 উত্তর: C) GA3
-৪৪. নিচের কোনটি একটি কৃত্রিম জিব্বেরেলিন? A) ইউনিকোনাজল B) ড্যামিনোজাইড C) A ও B উভয়ই D) 2,4-D উত্তর: C) A ও B উভয়ই
-৪৫. জিব্বেরেলিন হরমোনের রাসায়নিক উপাদানগুলি কী কী? A) C, H, O, N B) C, H, O C) C, H, N D) C, O, N উত্তর: B) C, H, O
-৪৬. অক্সিনের সঙ্গে জিব্বেরেলিনের গঠনগত একটি প্রধান পার্থক্য হলো— A) জিব্বেরেলিন অম্লধর্মী নয় B) জিব্বেরেলিনে নাইট্রোজেন থাকে না C) অক্সিনে নাইট্রোজেন থাকে না D) জিব্বেরেলিন গ্যাসিয় হরমোন উত্তর: B) জিব্বেরেলিনে নাইট্রোজেন থাকে না
-৪৭. বীজ ও মুকুলের সুপ্তাবস্থা ভঙ্গ (Breaking dormancy) করতে সাহায্য করে কোন্ হরমোন? A) অক্সিন B) সাইটোকাইনিন C) জিব্বেরেলিন D) ইথিলিন উত্তর: C) জিব্বেরেলিন
-৪৮. বীজের সুপ্ত দশা ভাঙার জন্য জিব্বেরেলিন কোন্ উৎসেচকের কার্যকারিতা বৃদ্ধি করে? A) লাইপেজ B) প্রোটিয়েজ C) আলফা অ্যামাইলেজ D) সেলুলেজ উত্তর: C) আলফা অ্যামাইলেজ
-৪৯. বীজের সুপ্তাবস্থা বজায় রাখে জিব্বেরেলিনের বিপরীতধর্মী কোন্ হরমোন? A) অক্সিন B) কাইনিন C) ABA বা অ্যাবসিসিক অ্যাসিড D) ফ্লোরিজেন উত্তর: C) ABA বা অ্যাবসিসিক অ্যাসিড
-৫০. উদ্ভিদের পর্বমধ্যের (internodes) দৈর্ঘ্য বৃদ্ধি ঘটিয়ে গাছকে অতিশয় লম্বা হতে সাহায্য করে কে? A) জিব্বেরেলিন B) অক্সিন C) কাইনিন D) ইথিলিন উত্তর: A) জিব্বেরেলিন
-৫১. বংশগতভাবে খর্ব উদ্ভিদ (যেমন—বাঁধাকপি)-এ জিব্বেরেলিন প্রয়োগ করলে কী ঘটে? A) গাছটি মরে যায় B) পাতার রং হলুদ হয় C) অতিশয় লম্বা হয় বা বৃদ্ধি ঘটে D) ফুল ঝরে যায় উত্তর: C) অতিশয় লম্বা হয় বা বৃদ্ধি ঘটে
-৫২. আপেল, আঙুর, নাসপাতি প্রভৃতি উদ্ভিদের ফল গঠনে ও ফলের বৃদ্ধিতে বিশেষ ভূমিকা নেয় কোন্ হরমোন? A) জিব্বেরেলিন B) কাইনিন C) ইথিলিন D) অ্যাবসিসিক অ্যাসিড উত্তর: A) জিব্বেরেলিন
-৫৩. বিজ্ঞানী ডেনিস ও নিটস্ (১৯৯৬) কোন্ ফলের বীজবিহীন ফল উৎপাদনে জিব্বেরেলিনের উল্লেখ করেন? A)কলা B) আপেল C) পেঁপে D) তরমুজ উত্তর: B) আপেল
-৫৪. দ্বিবর্ষজীবী উদ্ভিদে প্রথম বছরে ফুল ফোটানোর জন্য কোন্ হরমোন প্রয়োগ করা হয়? A) অক্সিন B) সাইটোকাইনিন C) জিব্বেরেলিন D) ইথিলিন উত্তর: C) জিব্বেরেলিন
-৫৫. সাইটোকাইনিন বা কাইনিন-এর রাসায়নিক প্রকৃতি কীরূপ? A) অম্লধর্মী B) টারপিনয়েড C) পিউরিন জাতীয় নাইট্রোজেনঘটিত ক্ষারীয় D) স্টেরয়েডধর্মী উত্তর: C) পিউরিন জাতীয় নাইট্রোজেনঘটিত ক্ষারীয়
-৫৬. সাইটোকাইনিন হরমোন উদ্ভিদের কোন্ অংশে সবচেয়ে বেশি সংশ্লেষিত হয়? A) ফল ও সস্যে B) কাণ্ডের অগ্রভাগে C) মূলের অগ্রভাগে D) পরিণত পাতায় উত্তর: A) ফল ও সস্যে
-৫৭. সাইটোকাইনিন সর্বাধিক পরিমাণে পাওয়া যায় নিচের কোন্ উপাদানে? A) কচি পাতায় B) নারকেলের তরল সস্যে (ডাবের জলে) C) আমের রসে D) বীজের ত্বকে উত্তর: B) নারকেলের তরল সস্যে (ডাবের জলে)
-৫৮. নারকেলের জল ছাড়া সাইটোকাইনিন আর কোথায় অধিক পরিমাণে পাওয়া যায়? A) টম্যাটোর রসে ও ভুট্টার সস্যে B) লেবুর রসে C) আখের রসে D) পেঁয়াজের রসে উত্তর: A) টম্যাটোর রসে ও ভুট্টার সস্যে
-৫৯. নিচের কোনটি একটি প্রাকৃতিক সাইটোকাইনিন? A) কাইনেটিন B) জিয়াটিন C) 2,4-D D) NAA উত্তর: B) জিয়াটিন
-৬০. নিচের কোনটি একটি কৃত্রিম সাইটোকাইনিন? A) কাইনেটিন B) জিয়াটিন C) IAA D) GA3 উত্তর: A) কাইনেটিন
-৬১. সাইটোকাইনিন হরমোন প্রধানত কোন্ উপাদান দিয়ে গঠিত? A) C, H, O B) C, H, O, N C) C, H, N D) C, O, N উত্তর: B) C, H, O, N
-৬২. উদ্ভিদদেহে কোশ বিভাজন ঘটানো (Promotes cell division) কোন্ হরমোনের অত্যন্ত গুরুত্বপূর্ণ কাজ? A) জিব্বেরেলিন B) ইথিলিন C) সাইটোকাইনিন D) অ্যাবসিসিক অ্যাসিড উত্তর: C) সাইটোকাইনিন
-৬৩. বিজ্ঞানী গুটম্যান (১৯৫৬)-এর মতে, পেঁয়াজ ও মটরের মূলে দ্রুত কোশ বিভাজন ঘটায় কোন্ হরমোন? A) অক্সিন B) জিব্বেরেলিন C) সাইটোকাইনিন D) ফ্লোরিজেন উত্তর: C) সাইটোকাইনিন
-৬৪. বিজ্ঞানী ব্রাউন ও উড (১৯৬৭)-এর মতে, নয়নতারা উদ্ভিদে টিউমার কলা সৃষ্টি করতে সাহায্য করে কোন্ হরমোন? A) সাইটোকাইনিন B) অক্সিন C) জিব্বেরেলিন D) ইথিলিন উত্তর: A) সাইটোকাইনিন
-৬৫. উদ্ভিদের কাক্ষিক বা পার্শ্বীয় মুকুলের বৃদ্ধি (Promotes lateral bud) ঘটাতে সাহায্য করে কে? A) অক্সিন B) সাইটোকাইনিন C) জিব্বেরেলিন D) ডরমিন উত্তর: B) সাইটোকাইনিন
-৬৬. চা গাছ থেকে অগ্রমুকুল তুলে ফেললে গাছটি ক্রমশ গম্বুজাকার ধারণ করে কেন? A) সাইটোকাইনিন হরমোনের প্রভাবে কাক্ষিক মুকুলের বৃদ্ধি পায় বলে B) অক্সিন হরমোন বাড়ে বলে C) জিব্বেরেলিন কমে যায় বলে D) জলের অভাব ঘটে বলে উত্তর: A) সাইটোকাইনিন হরমোনের প্রভাবে কাক্ষিক মুকুলের বৃদ্ধি পায় বলে
-৬৭. পত্রমোচন বিলম্বিত করে (Delay leaf senescence) পাতার বার্ধক্য রোধ করে কোন্ হরমোন? A) অক্সিন B) জিব্বেরেলিন C) সাইটোকাইনিন D) ইথিলিন উত্তর: C) সাইটোকাইনিন
-৬৮. ১৯৬৭ খ্রিস্টাব্দে পাতার বার্ধক্য বিলম্বিত হওয়ার ঘটনাটি কারা আবিষ্কার করেন? A) ডারউইন ও ভেন্ট B) রিচমন্ড এবং ল্যাং C) ব্রাউন ও উড D) কুরোশোয়া উত্তর: B) রিচমন্ড এবং ল্যাং
-৬৯. পাতার ক্লোরোফিল নষ্ট হওয়া রোধ করে গাছকে অনেকদিন সবুজ রাখে কোন্ প্রভাবটি? A) অগ্রস্থ প্রকটতা B) পার্থেনোকার্পি C) রিচমন্ড-ল্যাং প্রভাব D) বোল্টিং উত্তর: C) রিচমন্ড-ল্যাং প্রভাব
-৭০. উৎসগত দিক থেকে অক্সিনের প্রধান উৎপত্তিস্থল কোনটি? A) ফল ও সস্য B) পরিপক্ব বীজ C) কাণ্ড ও মূলের অগ্রস্থ ভাজক কলা D) পরিণত পাতা উত্তর: C) কাণ্ড ও মূলের অগ্রস্থ ভাজক কলা
-৭১. নিচের কোন্ হরমোনটিতে নাইট্রোজেন থাকে না? A) অক্সিন B) সাইটোকাইনিন C) জিব্বেরেলিন D) কাইনেটিন উত্তর: C) জিব্বেরেলিন
-৭২. রাসায়নিক প্রকৃতির দিক থেকে অক্সিন কোন্ বর্গযুক্ত? A) টারপিনয়েড B) পিউরিন C) ইন্ডোল D) স্টেরয়েড উত্তর: C) ইন্ডোল
-৭৩. পরিবহণের দিক থেকে অক্সিনের ক্রিয়া প্রধানত কীরূপ? A) নিম্নমুখী B) ঊর্ধ্বমুখী C) ঊর্ধ্ব ও নিম্ন উভয়মুখী D) সবদিকে উত্তর: A) নিম্নমুখী
-৭৪. জিব্বেরেলিন হরমোন কোন্ কলার মাধ্যমে পরিবাহিত হয়? A) শুধুমাত্র জাইলেম B) শুধুমাত্র ফ্লোয়েম C) জাইলেম ও ফ্লোয়েম উভয় কলা D) ব্যাপন প্রক্রিয়ায় সকল কলায় উত্তর: C) জাইলেম ও ফ্লোয়েম উভয় কলা
-৭৫. উদ্ভিদের সমস্ত কলা-কোশগুলিতে ব্যাপন প্রক্রিয়ার মাধ্যমে পরিবাহিত হয় কোন্ হরমোন? A) অক্সিন B) জিব্বেরেলিন C) সাইটোকাইনিন D) ইথিলিন উত্তর: C) সাইটোকাইনিন
-৭৬. উদ্ভিদের ট্রপিক চলন নিয়ন্ত্রণে কোন্ হরমোনের ভূমিকা আছে? A) সাইটোকাইনিন B) জিব্বেরেলিন C) অক্সিন D) সবকটি উত্তর: C) অক্সিন
-৭৭. মুকুল ও বীজের সুপ্তাবস্থা ভাঙতে কোন্ হরমোন সাহায্য করে? A) অক্সিন B) জিব্বেরেলিন C) সাইটোকাইনিন D) কোনোটিই নয় উত্তর: B) জিব্বেরেলিন
-৭৮. বীজবিহীন ফল উৎপাদনে (পার্থেনোকার্পি) প্রধানত কোন্ হরমোন ব্যবহৃত হয়? A) সাইটোকাইনিন B) জিব্বেরেলিন C) অক্সিন D) ইথিলিন উত্তর: C) অক্সিন
-৭৯. যেসব হরমোন ল্যাবরেটরিতে সংশ্লেষ করা হয় অথচ প্রাকৃতিক হরমোনের মতোই কার্যকরী, তাদের কী বলে? A) লোকাল হরমোন B) সিন্থেটিক বা কৃত্রিম হরমোন C) ট্রপিক হরমোন D) ফেরোমন উত্তর: B) সিন্থেটিক বা কৃত্রিম হরমোন
-৮০. কৃত্রিম হরমোনের অপর নাম কী? A) প্ল্যান্ট গ্রোথ রেগুলেটরস (PGRs) B) গ্রোথ ইনহিবিটর C) গ্রোথ প্রোমোটার D) ফাইটোক্রোম উত্তর: A) প্ল্যান্ট গ্রোথ রেগুলেটরস (PGRs)
-৮১. শাখা কলম (Stem cutting) থেকে দ্রুত নতুন উদ্ভিদ বা মূল সৃষ্টি করতে কোন্ হরমোন প্রয়োগ করা হয়? A) কৃত্রিম জিব্বেরেলিন B) কৃত্রিম অক্সিন (IBA, NAA) C) কৃত্রিম সাইটোকাইনিন D) ইথিলিন উত্তর: B) কৃত্রিম অক্সিন (IBA, NAA)
-৮২. গোলাপ, আম, পেয়ারা, লেবু প্রভৃতি উদ্ভিদের শাখায় মূল উৎপন্ন করতে সাধারণত কোনটি ব্যবহৃত হয়? A) 2,4-D B) IBA C) GA3 D) কাইনেটিন উত্তর: B) IBA
-৮৩. গাছের মুকুল বা কচি ফলের অপরিণত মোচন (premature drop) রোধ করতে কোন্ কৃত্রিম হরমোন স্প্রে করা হয়? A) 2,4-D B) NAA C) IBA D) GA3 উত্তর: A) 2,4-D
-৮৪. ধান, গম, যব প্রভৃতি শস্যক্ষেত থেকে আগাছা নির্মূল করতে আগাছানাশক (Weedicide) হিসেবে কোন্ হরমোন ব্যবহার করা হয়? A) কৃত্রিম জিব্বেরেলিন B) কৃত্রিম অক্সিন (2,4-D) C) কৃত্রিম সাইটোকাইনিন D) অ্যাবসিসিক অ্যাসিড উত্তর: B) কৃত্রিম অক্সিন (2,4-D)
-৮৫. আগাছানাশক হিসেবে 2,4-D ব্যবহার করলে মূল ফসলের ওপর কীরূপ প্রভাব পড়ে? A) ফসল মরে যায় B) ফসলের বৃদ্ধি থেমে যায় C) ফসলের ওপর কোনো স্থায়ী প্রভাব পড়ে না D) ফসল দ্রুত পাকে উত্তর: C) ফসলের ওপর কোনো স্থায়ী প্রভাব পড়ে না
-৮৬. কৃত্রিমভাবে বীজবিহীন ফল (পার্থেনোকার্পি) সৃষ্টিতে কোন্ কৃত্রিম হরমোন প্রয়োগ করা হয়? A) 2,4-D B) NAA ও IBA C) GA3 D)কাইনেটিন উত্তর: B) NAA ও IBA
-৮৭. পেঁপে, কলা, টম্যাটো, পেয়ারা ইত্যাদি বীজবিহীন ফল তৈরিতে প্রধানত কী প্রয়োগ করা হয়? A) কৃত্রিম জিব্বেরেলিন B) কৃত্রিম অক্সিন C) কৃত্রিম সাইটোকাইনিন D) ইথিলিন উত্তর: B) কৃত্রিম অক্সিন
-৮৮. ফলের ঝুড়িতে একটি আম পাকলে বাকি আমগুলি তাড়াতাড়ি পেকে যায় কেন? A) অক্সিনের কারণে B) তাপমাত্রার কারণে C) ইথিলিনের প্রভাবে D) জিব্বেরেলিনের প্রভাবে উত্তর: C) ইথিলিনের প্রভাবে
-৮৯. উদ্ভিদদেহে উৎপন্ন একমাত্র গ্যাসিয় হরমোন কোনটি? A) অক্সিন B) জিব্বেরেলিন C) সাইটোকাইনিন D) ইথিলিন উত্তর: D) ইথিলিন
-৯০. দ্রুত ফল পাকাতে সাহায্য করে কোন্ হরমোন? A) জিব্বেরেলিন B) ইথিলিন C) কাইনিন D) ডরমিন উত্তর: B) ইথিলিন
-৯১. উদ্ভিদের বৃদ্ধিতে বাধাদানকারী একটি হরমোন কোনটি? A) অক্সিন B) জিব্বেরেলিন C) সাইটোকাইনিন D) অ্যাবসিসিক অ্যাসিড (ABA) উত্তর: D) অ্যাবসিসিক অ্যাসিড (ABA)
-৯২. অঙ্কুরোদ্গমে বাধাদান করা কোন্ হরমোনের কাজ? A) জিব্বেরেলিন B) সাইটোকাইনিন C) অক্সিন D) অ্যাবসিসিক অ্যাসিড (ABA) উত্তর: D) অ্যাবসিসিক অ্যাসিড (ABA)
-৯৩. প্রকৃতিদত্ত হরমোন যা ফুল ফোটাতে সাহায্য করে, তার নাম কী? A) ফ্লোরিজেন B) ডরমিন C) ইথিলিন D) কাইনিন উত্তর: A) ফ্লোরিজেন
-৯৪. অক্সিন হরমোন উদ্ভিদের কোন্ অংশে উৎপন্ন হয়ে কোন্ দিকে পরিবাহিত হয়? A) মূল থেকে কাণ্ডে B) কাণ্ড ও পাতায় উৎপন্ন হয়ে নিম্নমুখে C) পাতা থেকে ফুলে D) ফুল থেকে ফলে উত্তর: B) কাণ্ড ও পাতায় উৎপন্ন হয়ে নিম্নমুখে
-৯৫. জিব্বেরেলিন বর্ধিষ্ণু পাতায় বা মুকুলে উৎপন্ন হয়ে কোন্ দিকে পরিবাহিত হয়? A) শুধুমাত্র উপরে B) শুধুমাত্র নিচে C) উপর ও নিচে উভয়দিকে D) পরিবাহিত হয় না উত্তর: C) উপর ও নিচে উভয়দিকে
-৯৬. সাইটোকাইনিন ফল ও সস্যে সংশ্লেষিত হয়ে কোন্ দিকে পরিবাহিত হয়? A) নিম্নমুখে B) ঊর্ধ্বমুখে C) সবদিকে D) শুধুমাত্র মূলে উত্তর: C) সবদিকে
-৯৭. ট্রপিক চলন নিয়ন্ত্রণে কার কোনো ভূমিকাই নেই? A) শুধুমাত্র অক্সিন B) জিব্বেরেলিন ও সাইটোকাইনিন C) শুধুমাত্র সাইটোকাইনিন D) শুধুমাত্র জিব্বেরেলিন উত্তর: B) জিব্বেরেলিন ও সাইটোকাইনিন
-৯৮. মুকুল ও বীজের সুপ্তাবস্থা ভাঙার ক্ষেত্রে অক্সিন ও সাইটোকাইনিনের ভূমিকা কীরূপ? A) উভয়েই সাহায্য করে B) অক্সিন সাহায্য করে, সাইটোকাইনিন বাধা দেয় C) এদের কোনো ভূমিকা নেই D) সাইটোকাইনিন সাহায্য করে, অক্সিন বাধা দেয় উত্তর: C) এদের কোনো ভূমিকা নেই
-৯৯. অক্সিন হরমোন প্রধানত কোন্ শারীরবৃত্তীয় প্রক্রিয়ায় অপরিহার্য ভূমিকা পালন করে? A) বীজের অঙ্কুরোদ্গম B) ট্রপিক চলন ও অগ্রস্থ প্রকটতা C) পর্বমধ্যের বৃদ্ধি D) পত্রমোচন বিলম্বিত করা উত্তর: B) ট্রপিক চলন ও অগ্রস্থ প্রকটতা
-১০০. উদ্ভিদ হরমোন হলো মূলত একপ্রকার— A) অজৈব যৌগ B) পরিপোষক জৈব যৌগ C) পরিপোষক ব্যতীত জৈব যৌগ যা বৃদ্ধি ও বিপাক নিয়ন্ত্রণ করে D) খনিজ পদার্থ উত্তর: C) পরিপোষক ব্যতীত জৈব যৌগ যা বৃদ্ধি ও বিপাক নিয়ন্ত্রণ করে
-_T3_
-১. প্রাণীদেহে কোশে কোশে রাসায়নিক সংযোগ গড়ে তোলার জন্য রাসায়নিক সমন্বয়কারী হিসেবে কে কাজ করে? A) উৎসেচক B) হরমোন C) রক্ত D) লসিকা উত্তর: B) হরমোন
-২. প্রাণী হরমোন প্রধানত কোথা থেকে উৎপন্ন হয়? A) বহিঃক্ষরা গ্রন্থি B) অন্তঃক্ষরা গ্রন্থি C) লালাগ্রন্থি D) যকৃৎ উত্তর: B) অন্তঃক্ষরা গ্রন্থি
-৩. হরমোন প্রোটিনধর্মী হলে তার একটি উদাহরণ হলো— A) টেস্টোস্টেরন B)প্রোস্টাগ্ল্যান্ডিন C) STH D) থাইরক্সিন উত্তর: C) STH
-৪. নিচের কোনটি একটি অ্যামাইনোধর্মী হরমোনের উদাহরণ? A) ইনসুলিন B) অ্যাড্রিনালিন C) ইস্ট্রোজেন D) প্রোজেস্টেরন উত্তর: B) অ্যাড্রিনালিন
-৫. স্টেরয়েডধর্মী হরমোনের উদাহরণ কোনটি? A) টেস্টোস্টেরন B)থাইরক্সিন C) STH D) প্রোস্টাগ্ল্যান্ডিন উত্তর: A) টেস্টোস্টেরন
-৬. প্রোস্টাগ্ল্যান্ডিন কী ধরনের হরমোনের উদাহরণ? A) প্রোটিনধর্মী B)লিপিডধর্মী C) অ্যামাইনোধর্মী D) স্টেরয়েডধর্মী উত্তর: B) লিপিডধর্মী
-৭. প্রাণী হরমোন উৎপত্তিস্থল থেকে কীভাবে পরিবাহিত হয়? A) নালির মাধ্যমে B) রক্তের মাধ্যমে C) লসিকার মাধ্যমে D) স্নায়ুর মাধ্যমে উত্তর: B) রক্তের মাধ্যমে
-৮. রক্ত থেকে কোন প্রক্রিয়ায় হরমোন কোশে প্রবেশ করে? A) অভিস্রবণ B) ব্যাপন C) সক্রিয় পরিবহণ D) পরিস্রাবণ উত্তর: B) ব্যাপন
-৯. হরমোন তার কাজ শেষ করার পর কী হয়? A) কোশে সঞ্চিত থাকে B) উৎসেচকে পরিণত হয় C) ধ্বংসপ্রাপ্ত হয় D) রক্তে মিশে যায় উত্তর: C) ধ্বংসপ্রাপ্ত হয়
-১০. হরমোনকে প্রাণীদেহের কী বলা হয়? A) ভৌত সমন্বয়ক B) রাসায়নিক বার্তাবহ বা দূত C) গঠনমূলক উপাদান D) প্রোটিন ফ্যাক্টরি উত্তর: B) রাসায়নিক বার্তাবহ বা দূত
-১১. অন্তঃক্ষরা গ্রন্থির (Endocrine gland) প্রধান বৈশিষ্ট্য কোনটি? A) এদের নিজস্ব নালি থাকে B) ক্ষরণ নালির মাধ্যমে পরিবাহিত হয় C) এদের নিজস্ব কোনো নালি থাকে না D) এরা ঘর্ম ক্ষরণ করে উত্তর: C) এদের নিজস্ব কোনো নালি থাকে না
-১২. লালাগ্রন্থি, স্তনগ্রন্থি, ঘর্মগ্রন্থি প্রভৃতি কী প্রকারের গ্রন্থি? A) অন্তঃক্ষরা গ্রন্থি B) বহিঃক্ষরা গ্রন্থি C) মিশ্র গ্রন্থি D) পিটুইটারি গ্রন্থি উত্তর: B) বহিঃক্ষরা গ্রন্থি
-১৩. বহিঃক্ষরা গ্রন্থি থেকে প্রধানত কী ক্ষরিত হয়? A) হরমোন B) রক্ত C) ঘর্ম, দুগ্ধ, উৎসেচক পূর্ণ রস D) লসিকা উত্তর: C) ঘর্ম, দুগ্ধ, উৎসেচক পূর্ণ রস
-১৪. হাইপোথ্যালামাস মানব মস্তিষ্কের কোথায় অবস্থিত? A) লঘুমস্তিষ্কে B)অগ্রমস্তিষ্কের ডায়ানসেফালনের অংশে C) সুষুম্নাশীর্ষকে D) পনস-এ উত্তর: B) অগ্রমস্তিষ্কের ডায়ানসেফালনের অংশে
-১৫. হাইপোথ্যালামাস থেকে ক্ষরিত নিউরোহরমোনগুলি কোন গ্রন্থির ক্ষরণ নিয়ন্ত্রণ করে? A) থাইরয়েড B) অগ্র পিটুইটারি C) অগ্ন্যাশয় D) অ্যাড্রেনাল উত্তর: B) অগ্র পিটুইটারি
-১৬. মানবদেহের কোন অংশটিকে 'সুপ্রিম কমান্ডার' বা সর্বোচ্চ প্রভুগ্রন্থি বলা হয়? A) পিটুইটারি B) থাইরয়েড C) হাইপোথ্যালামাস D) অগ্ন্যাশয় উত্তর: C) হাইপোথ্যালামাস
-১৭. হাইপোথ্যালামাস ক্ষরিত ARH (অ্যাড্রেনোকর্টিকোট্রপিন রিলিজিং হরমোন) পিটুইটারিকে কোন হরমোন ক্ষরণে উদ্দীপিত করে? A) TSH B) ACTH C) GH D) FSH উত্তর: B) ACTH
-১৮. TRH (থাইরোট্রপিন রিলিজিং হরমোন) পিটুইটারিকে কোন হরমোন ক্ষরণে উদ্দীপনা জোগায়? A) TSH B) STH C) MSH D) LH উত্তর: A) TSH
-১৯. অগ্র পিটুইটারিকে STH বা GH ক্ষরণে উদ্দীপনা জোগায় হাইপোথ্যালামাসের কোন হরমোন? A) TRH B) SRH (সোমাটোট্রপিন রিলিজিং হরমোন) C) GnRH D) PRH উত্তর: B) SRH (সোমাটোট্রপিন রিলিজিং হরমোন)
-২০. GnRH (গোনাডোট্রপিন রিলিজিং হরমোন) পিটুইটারিকে কোন হরমোন ক্ষরণে উদ্দীপিত করে? A) ACTH ও TSH B) FSH ও LH C) STH ও MSH D) PRH ও PIHউত্তর: B) FSH ও LH
-২১. PRH (প্রোল্যাকটিন রিলিজিং হরমোন) পিটুইটারিকে কোন হরমোন ক্ষরণে উদ্দীপনা জোগায়? A) প্রোল্যাকটিন B)অক্সিটোসিন C) ভেসোপ্রেসিন D) ইস্ট্রোজেন উত্তর: A) প্রোল্যাকটিন
-২২. PIH (প্রোল্যাকটিন ইনহিবিটিং হরমোন) এর প্রধান কাজ কী? A)প্রোল্যাকটিন নিঃসরণ বাড়ানো B) প্রোল্যাকটিন নিঃসরণে বাধা দেওয়া C) ACTH ক্ষরণ কমানো D) TSH ক্ষরণ বাড়ানো উত্তর: B)প্রোল্যাকটিন নিঃসরণে বাধা দেওয়া
-২৩. হাইপোথ্যালামাস ক্ষরিত MIH (মেলানোট্রপিন ইনহিবিটিং হরমোন) কোন হরমোন ক্ষরণে বাধা দেয়? A) STH B) MSH C) ACTH D) LH উত্তর: B) MSH
-২৪. মানবদেহের 'মাস্টার গ্ল্যান্ড' বা প্রভুগ্রন্থি কাকে বলে? A) থাইরয়েড গ্রন্থিকে B) পিটুইটারি গ্রন্থিকে C) হাইপোথ্যালামাসকে D) শুক্রাশয়কে উত্তর: B) পিটুইটারি গ্রন্থিকে
-২৫. পিটুইটারি গ্রন্থি করোটির কোন অস্থির প্রকোষ্ঠে অবস্থিত? A) এথময়েড B) স্ফেনয়েড অস্থির সেলা টারসিকা C) প্যারাইটাল D) অক্সিপিটাল উত্তর: B) স্ফেনয়েড অস্থির সেলা টারসিকা
-২৬. পিটুইটারির অগ্রভাগ থেকে ক্ষরিত হরমোনগুলিকে কী বলা হয়? A) নিউরোহরমোন B) লোকাল হরমোন C) ট্রপিক হরমোন D)স্টেরয়েড হরমোন উত্তর: C) ট্রপিক হরমোন
-২৭. অ্যাড্রেনাল গ্রন্থির কর্টেক্স অঞ্চলের বৃদ্ধি নিয়ন্ত্রণ করে কোন হরমোন? A) TSH B) STH C) ACTH D) GTH উত্তর: C) ACTH
-২৮. ACTH-এর অধিক ক্ষরণে মানবদেহে কোন রোগ প্রকাশ পায়? A) বামনত্ব B) মধুমেহ C) গয়টার D) কুশিং বর্ণিত লক্ষণ (Cushing's syndrome) উত্তর: D)কুশিং বর্ণিত লক্ষণ (Cushing's syndrome)
-২৯. অস্থি ও তরুণাস্থি কোশের বৃদ্ধির মাধ্যমে দেহের বৃদ্ধিতে সাহায্য করে কোন হরমোন? A) STH বা GH B) ACTH C) TSH D) GTH উত্তর: A) STH বা GH
-৩০. শর্করা, প্রোটিন ও ফ্যাট বিপাকে বিশেষ ভূমিকা গ্রহণ করে কোন হরমোন? A) ACTH B) STH C) MSH D) ADH উত্তর: B) STH
-৩১. শৈশবে STH হরমোনের কম ক্ষরণে কী রোগ হয়? A) অতিকায়ত্ব B) বামনত্ব (Dwarfism) C) বহুমূত্র D) গয়টার উত্তর: B) বামনত্ব (Dwarfism)
-৩২. শৈশবে STH হরমোনের অধিক ক্ষরণে কী রোগ হয়? A) বামনত্ব B) অতিকায়ত্ব C) মধুমেহ D) ডায়াবেটিস ইনসিপিডাস উত্তর: B) অতিকায়ত্ব
-৩৩. থাইরয়েড গ্রন্থির বৃদ্ধি নিয়ন্ত্রণ করে এবং হরমোন ক্ষরণে উদ্দীপিত করে কোন হরমোন? A) TSH B) ACTH C) STH D) FSH উত্তর: A) TSH
-৩৪. গোনাডোট্রপিক হরমোন (GTH) প্রধানত কোন গ্রন্থির ওপর কাজ করে? A) অ্যাড্রেনাল গ্রন্থি B) থাইরয়েড গ্রন্থি C) জননগ্রন্থি (শুক্রাশয় ও ডিম্বাশয়) D) অগ্ন্যাশয় উত্তর: C) জননগ্রন্থি (শুক্রাশয় ও ডিম্বাশয়)
-৩৫. স্ত্রীদেহে ডিম্বাশয়ে গ্রাফিয়ান ফলিকল বা ডিম্বথলির আয়তন ও সংখ্যা বৃদ্ধিতে সাহায্য করে কোন হরমোন? A) FSH B) LH C) ICSH D) LTH উত্তর: A) FSH
-৩৬. স্ত্রীদেহে করপাস লিউটিয়াম বা পীতগ্রন্থির বৃদ্ধি ঘটায় এবং প্রোজেস্টেরন নিঃসরণে সাহায্য করে কোন হরমোন? A) FSH B) LH C) ACTH D) STH উত্তর: B) LH
-৩৭. পুরুষদেহে শুক্রাশয়স্থিত ইন্টাস্টিসিয়াল সেলসমূহকে উদ্দীপিত করে টেস্টোস্টেরন নিঃসরণ ঘটায় কে? A) FSH B) LH C) ICSH D) LTH উত্তর: C) ICSH
-৩৮. মাতৃদেহে স্তনদুগ্ধ উৎপাদনে ও স্তনগ্রন্থির বিকাশে সাহায্য করে কোন হরমোন? A) FSH B) LH C) LTH বা প্রোল্যাকটিন D) ICSH উত্তর: C) LTH বা প্রোল্যাকটিন
-৩৯. পিটুইটারির পশ্চাৎভাগ বা নিউরোহাইপোফাইসিস থেকে ক্ষরিত হরমোনগুলিকে কী বলে? A) ট্রপিক হরমোন B) নিউরোহরমোন C) স্টেরয়েড হরমোন D) লোকাল হরমোন উত্তর: B) নিউরোহরমোন
-৪০. নিউরোহরমোনগুলির প্রকৃত উৎপত্তিস্থল কোথায়? A) অগ্র পিটুইটারি B) মধ্য পিটুইটারি C) হাইপোথ্যালামাস D) থ্যালামাস উত্তর: C) হাইপোথ্যালামাস
-৪১. বৃক্কীয় নালিকায় জল বিশোষণ ঘটায় কোন হরমোন? A) ADH (ভেসোপ্রেসিন) B) অক্সিটোসিন C) STH D) ACTH উত্তর: A) ADH (ভেসোপ্রেসিন)
-৪২. প্রসবকালে জরায়ুর সংকোচন ঘটায় কোন হরমোন? A) ইস্ট্রোজেন B) প্রোজেস্টেরন C) অক্সিটোসিন D) ADH উত্তর: C) অক্সিটোসিন
-৪৩. সন্তান প্রসবের পর সমগ্র ল্যাকটেশন পিরিয়ড চলাকালীন স্তনগ্রন্থি থেকে দুগ্ধ নিঃসরণে সাহায্য করে কে? A) অক্সিটোসিন B) ইনসুলিন C) অ্যাড্রেনালিন D) থাইরক্সিন উত্তর: A) অক্সিটোসিন
-৪৪. থাইরয়েড গ্রন্থি মানবদেহের কোথায় অবস্থিত? A) মস্তিষ্কে B) গ্রীবাদেশে ল্যারিংসের নীচে ট্রাকিয়ার দু-পাশে C)বৃক্কের ওপরে D) যকৃতের পাশে উত্তর: B) গ্রীবাদেশে ল্যারিংসের নীচে ট্রাকিয়ার দু-পাশে
-৪৫. থাইরয়েড গ্রন্থি থেকে নিঃসৃত প্রধান হরমোনটির নাম কী? A) থাইরক্সিন (T4) B) ইনসুলিন C) গ্লুকাগন D) অ্যাড্রেনালিন উত্তর: A) থাইরক্সিন (T4)
-৪৬. ক্রেবস চক্রের সক্রিয়তা বৃদ্ধি করে কলাকোশের বিপাকীয় কাজ নিয়ন্ত্রণ করে কোন হরমোন? A) ইনসুলিন B) গ্লুকাগন C) থাইরক্সিন D) অ্যাড্রেনালিন উত্তর: C) থাইরক্সিন
-৪৭. যকৃতে ও পেশিতে সঞ্চিত গ্লাইকোজেনকে গ্লুকোজে রূপান্তরিত হতে সাহায্য করে কোন হরমোন? A) ইনসুলিন B) থাইরক্সিন C) ADH D) অক্সিটোসিন উত্তর: B)থাইরক্সিন
-৪৮. সঞ্চিত মেদ বিয়োজিত করে কিটোন বডির উৎপাদন বৃদ্ধি করে কে? A) ইনসুলিন B) থাইরক্সিন C) ইস্ট্রোজেন D) টেস্টোস্টেরন উত্তর: B) থাইরক্সিন
-৪৯. দেহের তাপ উৎপাদন ও অক্সিজেন ব্যবহার নিয়ন্ত্রণ করে BMR বৃদ্ধি করে কোন হরমোন? A) থাইরক্সিন B) ইনসুলিন C) STH D) ADH উত্তর: A) থাইরক্সিন
-৫০. লোহিত রক্তকণিকার ক্রমপরিণতিতে সাহায্য করে কোন হরমোন? A) অ্যাড্রেনালিন B) থাইরক্সিন C) ইনসুলিন D) গ্লুকাগন উত্তর: B) থাইরক্সিন
-৫১. থাইরক্সিনের প্রভাবে হৃৎস্পন্দনের হারের কী পরিবর্তন হয়? A) কমে যায় B) বেড়ে যায় C) অপরিবর্তিত থাকে D) প্রথমে কমে পরে বাড়ে উত্তর: B) বেড়ে যায়
-৫২. কোষীয় বিপাক হার বৃদ্ধি করে অধিক তাপ উৎপাদনে সাহায্য করার জন্য থাইরক্সিনকে কী বলা হয়? A) অ্যান্টিডায়াবেটিক হরমোন B) জরুরিকালীন হরমোন C) ক্যালোরিজেনিক হরমোন D) অ্যান্টিকেটোজেনিক হরমোন উত্তর: C) ক্যালোরিজেনিক হরমোন
-৫৩. থাইরক্সিন হরমোন সংশ্লেষের জন্য অত্যাবশ্যকীয় উপাদান কোনটি? A) আয়রন B) ক্যালসিয়াম C) আয়োডিন D) সোডিয়াম উত্তর: C) আয়োডিন
-৫৪. অগ্ন্যাশয়কে কী ধরনের গ্রন্থি বলা হয়? A) অন্তঃক্ষরা গ্রন্থি B) মিশ্র গ্রন্থি C) বহিঃক্ষরা গ্রন্থি D) লালাগ্রন্থি উত্তর: B) মিশ্র গ্রন্থি
-৫৫. অগ্ন্যাশয়ের অন্তঃক্ষরা কোশগুচ্ছকে একত্রে কী বলা হয়? A) গ্লোমেরুলাস B) আইলেটস অব ল্যাঙ্গারহ্যান্স C) কুপফার কোশ D) নেফ্রন উত্তর: B) আইলেটস অব ল্যাঙ্গারহ্যান্স
-৫৬. আইলেটস অব ল্যাঙ্গারহ্যান্স-এর বিটা কোশ থেকে কোন হরমোন ক্ষরিত হয়? A) ইনসুলিন B) গ্লুকাগন C) সোমাটোস্ট্যাটিন D) থাইরক্সিন উত্তর: A) ইনসুলিন
-৫৭. অগ্ন্যাশয়ের আলফা কোশ থেকে কোন হরমোন ক্ষরিত হয়? A) ইনসুলিন B) সোমাটোস্ট্যাটিন C) গ্লুকাগন D) প্যানক্রিয়েটিক পলিপেপটাইড উত্তর: C) গ্লুকাগন
-৫৮. ডেলটা কোশ থেকে কোন হরমোন ক্ষরিত হয়? A) ইনসুলিন B) গ্লুকাগন C) সোমাটোস্ট্যাটিন D) অ্যাড্রেনালিন উত্তর: C) সোমাটোস্ট্যাটিন
-৫৯. রক্তে গ্লুকোজের মাত্রা স্বাভাবিক রাখতে গুরুত্বপূর্ণ ভূমিকা গ্রহণ করে বলে ইনসুলিনকে কী বলা হয়? A) ক্যালোরিজেনিক হরমোন B) অ্যান্টিডায়াবেটিক হরমোন C) জরুরিকালীন হরমোন D) ট্রপিক হরমোন উত্তর: B) অ্যান্টিডায়াবেটিক হরমোন
-৬০. পেশিকোশে গ্লুকোজ বিশোষণের হার বাড়ায় এবং গ্লাইকোলাইসিস প্রক্রিয়ায় গ্লুকোজকে পাইরুভিক অ্যাসিডে পরিণত হতে সাহায্য করে কে? A) গ্লুকাগন B) ইনসুলিন C) থাইরক্সিন D) অ্যাড্রেনালিন উত্তর: B) ইনসুলিন
-৬১. যকৃৎ ও পেশিকোশে গ্লুকোজ থেকে গ্লাইকোজেন সংশ্লেষের প্রক্রিয়াকে কী বলা হয়? A) গ্লাইকোলাইসিস B) গ্লাইকোজেনেসিস C) নিওগ্লুকোজেনেসিস D) গ্লাইকোজেনোলাইসিস উত্তর: B) গ্লাইকোজেনেসিস
-৬২. প্রোটিন ও ফ্যাট থেকে গ্লুকোজ উৎপন্ন হওয়ার প্রক্রিয়াকে কী বলে? A) গ্লাইকোজেনেসিস B) নিওগ্লুকোজেনেসিস C) গ্লাইকোলাইসিস D) ক্রেবস চক্র উত্তর: B) নিওগ্লুকোজেনেসিস
-৬৩. নিওগ্লুকোজেনেসিস প্রক্রিয়ায় প্রতিবন্ধকরূপে কাজ করে রক্তে শর্করার পরিমাণ বাড়তে দেয় না কোন হরমোন? A) ইনসুলিন B) গ্লুকাগন C) থাইরক্সিন D) অ্যাড্রেনালিন উত্তর: A) ইনসুলিন
-৬৪. কিটোন বডি প্রস্তুতিতে প্রতিবন্ধকতা সৃষ্টির জন্য ইনসুলিনকে কী বলা হয়? A) অ্যান্টিডায়াবেটিক হরমোন B) অ্যান্টিকেটোজেনিক হরমোন C) ক্যালোরিজেনিক হরমোন D) নিউরোহরমোন উত্তর: B) অ্যান্টিকেটোজেনিক হরমোন
-৬৫. ইনসুলিনের কম ক্ষরণে মানবদেহে কোন রোগ দেখা দেয়? A) ডায়াবেটিস ইনসিপিডাস B) মধুমেহ বা ডায়াবেটিস মেলিটাস C) গয়টার D) কুশিং সিনড্রোম উত্তর: B) মধুমেহ বা ডায়াবেটিস মেলিটাস
-৬৬. রক্তে শর্করার পরিমাণ হ্রাস পেলে যকৃতে সঞ্চিত গ্লাইকোজেনকে গ্লুকোজে বিশ্লিষ্ট করে রক্তে সরবরাহ করে কোন হরমোন? A) ইনসুলিন B) থাইরক্সিন C) গ্লুকাগন D) অক্সিটোসিন উত্তর: C) গ্লুকাগন
-৬৭. যকৃতে সঞ্চিত গ্লাইকোজেন গ্লুকোজে বিশ্লিষ্ট হওয়ার প্রক্রিয়াকে কী বলে? A) গ্লাইকোজেনেসিস B) গ্লাইকোজেনোলাইসিস C) নিওগ্লুকোজেনেসিস D) গ্লাইকোলাইসিস উত্তর: B) গ্লাইকোজেনোলাইসিস
-৬৮. রক্তে শর্করা নিয়ন্ত্রণে ইনসুলিনের ঠিক বিপরীত কাজ করে কোন হরমোন? A) থাইরক্সিন B) গ্লুকাগন C) অ্যাড্রেনালিন D) টেস্টোস্টেরন উত্তর: B) গ্লুকাগন
-৬৯. অ্যাড্রেনাল গ্রন্থি মানবদেহের কোথায় অবস্থিত? A) যকৃতের নীচে B) প্রতিটি বৃক্কের ঊর্ধ্বপ্রান্তে C) ডিম্বাশয়ের পাশে D) মস্তিষ্কের মূলদেশে উত্তর: B) প্রতিটি বৃক্কের ঊর্ধ্বপ্রান্তে
-৭০. অ্যাড্রেনাল গ্রন্থিকে অবস্থান অনুযায়ী কী গ্রন্থি বলা হয়? A) পিটুইটারি গ্রন্থি B) থাইরয়েড গ্রন্থি C) সুপ্রারেনাল গ্রন্থি D) মিশ্র গ্রন্থি উত্তর: C) সুপ্রারেনাল গ্রন্থি
-৭১. অ্যাড্রেনাল গ্রন্থির বাইরের স্তরকে কী বলে? A) কর্টেক্স B) মেডালা C) পেলভিস D) হাইলাম উত্তর: A) কর্টেক্স
-৭২. অ্যাড্রেনাল গ্রন্থির ভেতরের স্তরকে কী বলে? A) কর্টেক্স B) মেডালা C) লুপ D) পিরামিড উত্তর: B) মেডালা
-৭৩. অ্যাড্রেনালিন হরমোনকে কী হরমোন বলা হয়? A) ক্যালোরিজেনিক হরমোন B) অ্যান্টিডায়াবেটিক হরমোন C) জরুরিকালীন বা সংকটকালীন হরমোন D) লোকাল হরমোন উত্তর: C) জরুরিকালীন বা সংকটকালীন হরমোন
-৭৪. রাগ, ভয়, আনন্দ, দুশ্চিন্তা প্রভৃতি উত্তেজনাকালে কোন হরমোনের ক্ষরণ দ্রুত বেড়ে যায়? A) ইনসুলিন B) থাইরক্সিন C) অ্যাড্রেনালিন D) ইস্ট্রোজেন উত্তর: C) অ্যাড্রেনালিন
-৭৫. হার্দ-উৎপাদ (cardiac output) বৃদ্ধি করে এবং রক্তচাপ বাড়িয়ে দেয় কে? A) থাইরক্সিন B) ইনসুলিন C) অ্যাড্রেনালিন D) গ্লুকাগন উত্তর: C) অ্যাড্রেনালিন
-৭৬. হাঁপানির সময় ব্রংকিওলগুলিকে প্রসারিত করে শ্বাসকষ্ট লাঘব করে কোন হরমোন? A) ইনসুলিন B) অ্যাড্রেনালিন C) থাইরক্সিন D) টেস্টোস্টেরন উত্তর: B) অ্যাড্রেনালিন
-৭৭. ত্বকের রোম খাড়া করার জন্য দায়ী 'অ্যারেকটোরেস পিলাই' পেশির সংকোচন ঘটায় কে? A) ইনসুলিন B) থাইরক্সিন C) গ্লুকাগন D) অ্যাড্রেনালিন উত্তর: D) অ্যাড্রেনালিন
-৭৮. সিস্টোলিক ও ডায়াস্টোলিক রক্তচাপ বৃদ্ধি করা কার প্রধান কাজ? A) নর-অ্যাড্রেনালিন B) থাইরক্সিন C) ইনসুলিন D) গ্লুকাগন উত্তর: A) নর-অ্যাড্রেনালিন
-৭৯. শুক্রাশয় পুরুষদেহে কোথায় অবস্থিত? A) উদরগহ্বরে B) দেহাভ্যন্তরের বাইরে স্ক্রোটাম নামক থলির মধ্যে C) শ্রোণিগহ্বরে D) বক্ষগহ্বরে উত্তর: B) দেহাভ্যন্তরের বাইরে স্ক্রোটাম নামক থলির মধ্যে
-৮০. শুক্রাশয় থেকে নিঃসৃত প্রধান হরমোনটির নাম কী? A) ইস্ট্রোজেন B) প্রোজেস্টেরন C) টেস্টোস্টেরন D)প্রোল্যাকটিন উত্তর: C) টেস্টোস্টেরন
-৮১. টেস্টোস্টেরনকে কোন প্রকার হরমোন বলা যায়? A) ট্রপিক হরমোন B)লোকাল হরমোন C) নিউরোহরমোন D) জরুরিকালীন হরমোন উত্তর: B) লোকাল হরমোন
-৮২. পুরুষদের গৌণ যৌনলক্ষণ (যেমন- গলার স্বর মোটা হওয়া, গোঁফ-দাড়ি গজানো) প্রকাশে সাহায্য করে কে? A) ইনসুলিন B) থাইরক্সিন C) টেস্টোস্টেরন D)অ্যাড্রেনালিন উত্তর: C) টেস্টোস্টেরন
-৮৩. টেস্টোস্টেরন পুরুষদেহে কোনটির হার বৃদ্ধি করে? A) প্রোটিন সংশ্লেষ ও মৌল বিপাকীয় হার B) রক্তে শর্করার পরিমাণ C) রক্তচাপ D) ঘর্ম ক্ষরণ উত্তর: A) প্রোটিন সংশ্লেষ ও মৌল বিপাকীয় হার
-৮৪. স্ত্রীদেহে ডিম্বাশয় কোথায় অবস্থিত? A) বক্ষগহ্বরে B) শ্রোণিগহ্বরে জরায়ুর দু-পাশে C) উদরগহ্বরের ওপরে D) স্ক্রোটাম থলিতে উত্তর: B) শ্রোণিগহ্বরে জরায়ুর দু-পাশে
-৮৫. ডিম্বাশয় থেকে নিঃসৃত প্রধান হরমোন দুটি কী কী? A) ইনসুলিন ও গ্লুকাগন B) থাইরক্সিন ও অ্যাড্রেনালিন C) ইস্ট্রোজেন ও প্রোজেস্টেরন D) টেস্টোস্টেরন ও প্রোল্যাকটিন উত্তর: C) ইস্ট্রোজেন ও প্রোজেস্টেরন
-৮৬. স্ত্রীদেহে ডিম্ব উৎপাদন ঘটানো এবং নারীদেহের ত্বক কোমল ও মসৃণ করতে সাহায্য করে কোন হরমোন? A)প্রোজেস্টেরন B) ইস্ট্রোজেন C) টেস্টোস্টেরন D)ইনসুলিন উত্তর: B) ইস্ট্রোজেন
-৮৭. নারীদেহে রজঃচক্রের আবর্তন নিয়মিত করে কোন হরমোন? A) ইস্ট্রোজেন B) টেস্টোস্টেরন C) থাইরক্সিন D) গ্লুকাগন উত্তর: A) ইস্ট্রোজেন
-৮8. গর্ভাবস্থায় অমরা বা প্লাসেন্টা গঠনে সাহায্য করে স্ত্রীদেহের কোন হরমোন? A) ইস্ট্রোজেন B) প্রোজেস্টেরন C)টেস্টোস্টেরন D) রিলাক্সিন উত্তর: B) প্রোজেস্টেরন
-৮৯. গর্ভাবস্থায় ভ্রূণের বৃদ্ধি ও পুষ্টিতে সাহায্য করে এবং ডিম্ব উৎপাদন বন্ধ রাখে কে? A) ইস্ট্রোজেন B) ইনসুলিন C) প্রোজেস্টেরন D) অক্সিটোসিন উত্তর: C) প্রোজেস্টেরন
-৯০. গর্ভাবস্থা চলাকালীন জরায়ুর অমসৃণ পেশির সংকোচনে বাধা দান করে গর্ভাবস্থা সুরক্ষিত রাখে কোন হরমোন? A) ইস্ট্রোজেন B) প্রোজেস্টেরন C) রিলাক্সিন D) প্রোল্যাকটিন উত্তর: B) প্রোজেস্টেরন
-৯১. ২০ বছর বয়সেও যদি দৈহিক বৃদ্ধি ৭-১০ বছর বয়সের সমতুল্য হয়, তবে তাকে কোন রোগ বলা হয়? A) অতিকায়ত্ব B) বামনত্ব (Dwarfism) C) মধুমেহ D) গয়টার উত্তর: B) বামনত্ব (Dwarfism)
-৯২. বামনত্ব (Dwarfism)রোগ কোন হরমোনের কম ক্ষরণের ফলে হয়? A) TSH B) অগ্র পিটুইটারি নিঃসৃত STH বা গ্রোথ হরমোন C) ইনসুলিন D) থাইরক্সিন উত্তর: B) অগ্র পিটুইটারি নিঃসৃত STH বা গ্রোথ হরমোন
-৯৩. ডায়াবেটিস ইনসিপিদাস (Diabetes insipidus) বা বহুমূত্র রোগ কোন হরমোনের অভাবে হয়? A) ইনসুলিন B) থাইরক্সিন C) পশ্চাৎ পিটুইটারি থেকে ক্ষরিত ADH D) অক্সিটোসিন উত্তর: C)পশ্চাৎ পিটুইটারি থেকে ক্ষরিত ADH
-৯৪. ডায়াবেটিস ইনসিপিদাস রোগের একটি প্রধান লক্ষণ কী? A) রক্তে শর্করা বৃদ্ধি B) বার বার প্রচুর পরিমাণে মূত্র ত্যাগ C) থাইরয়েড গ্রন্থির বৃদ্ধি D) হৃৎস্পন্দন বৃদ্ধি উত্তর: B) বার বার প্রচুর পরিমাণে মূত্র ত্যাগ
-৯৫. খাদ্যে পর্যাপ্ত পরিমাণ আয়োডিনের অভাব থাকলে থাইরয়েড গ্রন্থিতে হরমোন সংশ্লেষ হ্রাস পায়, এর ফলে কোন রোগ হয়? A) মধুমেহ B) বহুমূত্র C) সরল গলগণ্ড বা গয়টার (Goitre) D) বামনত্ব উত্তর: C) সরল গলগণ্ড বা গয়টার (Goitre)
-৯৬. পাহাড়ি অঞ্চলের মাটিতে আয়োডিনের অভাব থাকায় সেখানকার মানুষদের কোন রোগটি বেশি দেখা যায়? A) মধুমেহ B) বহুমূত্র C) সরল গলগণ্ড D) বহিঃচক্ষু গয়টার উত্তর: C) সরল গলগণ্ড
-৯৭. অগ্ন্যাশয়ের বিটা কোশ থেকে নিঃসৃত ইনসুলিন হরমোনের কম ক্ষরণে কোন রোগ হয়? A) ডায়াবেটিস ইনসিপিদাস B) মধুমেহ বা ডায়াবেটিস মেলিটাস C) গয়টার D) বামনত্ব উত্তর: B) মধুমেহ বা ডায়াবেটিস মেলিটাস
-৯৮. মধুমেহ বা ডায়াবেটিস মেলিটাস রোগের একটি অন্যতম উপসর্গ কী? A) বহুমূত্র ও মূত্রের সঙ্গে শর্করা নির্গত হওয়া B) গলার স্বর মোটা হওয়া C) অস্থি ও তরুণাস্থির অস্বাভাবিক বৃদ্ধি D) হৃৎস্পন্দন কমে যাওয়া উত্তর: A) বহুমূত্র ও মূত্রের সঙ্গে শর্করা নির্গত হওয়া
-৯৯. গ্রেভস বর্ণিত রোগ (Graves' disease) বা বহিঃচক্ষু গয়টার কোন হরমোনের অধিক ক্ষরণে হয়? A) ইনসুলিন B) থাইরক্সিন C) অ্যাড্রেনালিন D) টেস্টোস্টেরন উত্তর: B) থাইরক্সিন
-১০০. বহিঃচক্ষু গয়টার (Graves' disease) একটি কী প্রকারের রোগ? A) সংক্রামক রোগ B)অটোইমিউন রোগ C) বংশগত রোগ D) ভিটামিনের অভাবজনিত রোগ উত্তর: B)অটোইমিউন রোগ
-_T4_
-১. প্রাণীদের 'ভৌত সমন্বয়ক' (Physical coordinator) হিসেবে কে কাজ করে? ক) হরমোন খ) স্নায়ুতন্ত্র গ) রক্ত সংবহনতন্ত্র ঘ) পেশিতন্ত্র উত্তর: খ) স্নায়ুতন্ত্র
-২. স্নায়ুতন্ত্র প্রধানত কী দিয়ে গঠিত হয়? ক) রক্ত ও লসিকা খ) অস্থি ও তরুণাস্থি গ) স্নায়ুকোশ ও নিউরোগ্লিয়া ঘ) নেফ্রন ও পেশি উত্তর: গ) স্নায়ুকোশ ও নিউরোগ্লিয়া
-৩. পরিবেশের কোনো পরিবর্তনে বা উদ্দীপনায় সাড়া প্রদানের সক্ষমতাকে কী বলে? ক) বৃদ্ধি খ) চলন গ) সংবেদনশীলতা ঘ) উপযোজন উত্তর: গ) সংবেদনশীলতা
-৪. স্নায়বিক পথে উদ্দীপনা প্রথম কে গ্রহণ করে? ক) কারক খ) স্নায়ুকেন্দ্র গ) গ্রাহক ঘ) মোটর নিউরোন উত্তর: গ) গ্রাহক
-৫. ত্বক, চোখ, কান ইত্যাদি অঙ্গগুলি স্নায়বিক পথে কী হিসেবে কাজ করে? ক) কারক খ) গ্রাহক গ) স্নায়ুকেন্দ্র ঘ) আজ্ঞাবহ নিউরোন উত্তর: খ) গ্রাহক
-৬. গ্রাহক থেকে উদ্দীপনা স্নায়ুকেন্দ্রে কে পাঠায়? ক) আজ্ঞাবহ নিউরোন খ) সহযোগী নিউরোন গ) সংজ্ঞাবহ নিউরোন ঘ) কারক উত্তর: গ) সংজ্ঞাবহ নিউরোন
-৭. স্নায়বিক উদ্দীপনা বিশ্লেষণ করে সাড়া (response) তৈরি করে কে? ক) গ্রাহক খ) কারক গ) স্নায়ুকেন্দ্র ঘ) আজ্ঞাবহ নিউরোন উত্তর: গ) স্নায়ুকেন্দ্র
-৮. স্নায়ুকেন্দ্র থেকে সাড়া বা নির্দেশ কারকে বহন করে নিয়ে যায় কে? ক) সংজ্ঞাবহ নিউরোন খ) আজ্ঞাবহ নিউরোন গ) গ্রাহক ঘ) রিসেপ্টর উত্তর: খ) আজ্ঞাবহ নিউরোন
-৯. স্নায়বিক পথে উদ্দীপনায় সাড়া প্রদান করে কে? ক) গ্রাহক খ) স্নায়ুকেন্দ্র গ) কারক (যেমন- পেশি ও গ্রন্থি) ঘ) সংজ্ঞাবহ নিউরোন উত্তর: গ) কারক (যেমন- পেশি ও গ্রন্থি)
-১০. জীবদেহে রাসায়নিক সমন্বয়কারী হিসেবে কে কাজ করে? ক) রক্ত খ) হরমোন গ) স্নায়ু ঘ) লসিকা উত্তর: খ) হরমোন
-১১. কার কাজের প্রভাব দ্রুত কিন্তু তাৎক্ষণিক? ক) হরমোন খ) ভিটামিন গ) স্নায়ুতন্ত্র ঘ) উৎসেচক উত্তর: গ) স্নায়ুতন্ত্র
-১২. ক্রিয়ার পর কে ধ্বংসপ্রাপ্ত হয়? ক) হরমোন খ) স্নায়ু গ) মস্তিষ্ক ঘ) সুষুম্নাকাণ্ড উত্তর: ক) হরমোন
-১৩. ক্রিয়ার পর কার কোনো গঠনগত ও কার্যগত পরিবর্তন হয় না? ক) উৎসেচক খ) হরমোন গ) স্নায়ুতন্ত্র ঘ) গ্রন্থি উত্তর: গ) স্নায়ুতন্ত্র
-১৪. হরমোন প্রধানত কোথা থেকে দূরে ক্রিয়া করে? ক) কারক থেকে খ) উৎপত্তিস্থল থেকে গ) গ্রাহক থেকে ঘ) স্নায়ুকেন্দ্র থেকে উত্তর: খ) উৎপত্তিস্থল থেকে
-১৫. এদের মধ্যে কে কখনো স্থানচ্যুত হয় না? ক) রক্ত খ) হরমোন গ) স্নায়ুতন্ত্র ঘ) লসিকা উত্তর: গ) স্নায়ুতন্ত্র
-১৬. স্নায়ুতন্ত্রের গঠনগত ও কার্যগত একক কোনটি? ক) নেফ্রন খ) নিউরোন গ) গ্লিয়াল কোশ ঘ) পেশিকোশ উত্তর: খ) নিউরোন
-১৭. নিউরোনের প্রধান অংশ কয়টি? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: ক) ২টি (কোশদেহ ও প্রবর্ধক)
-১৮. নিউরোনের তারকাকার বা গোলাকার মূল অংশটিকে কী বলা হয়? ক) অ্যাক্সন খ) ডেনড্রন গ) কোশদেহ বা নিউরোসাইটন ঘ) সাইন্যাপস উত্তর: গ) কোশদেহ বা নিউরোসাইটন
-১৯. কোশদেহকে আবৃত করে রাখা ঝিল্লিটি কী দিয়ে নির্মিত? ক) সেলুলোজ খ) পেপটিডোগ্লাইক্যান গ) লাইপোপ্রোটিন ঘ) কাইটিন উত্তর: গ) লাইপোপ্রোটিন
-২০. কোশদেহে অবস্থিত সাইটোপ্লাজমকে কী বলে? ক) নিউরোপ্লাজম খ) অ্যাক্সোপ্লাজম গ) সারকোপ্লাজম ঘ) প্রোটোপ্লাজম উত্তর: ক) নিউরোপ্লাজম
-২১. নিউরোনে প্রোটিন সংশ্লেষে সহায়তা করে কে? ক) মাইটোকনড্রিয়া খ) নিউরোফাইব্রিল গ) নিজল দানা ঘ) সেন্ট্রোজোম উত্তর: গ) নিজল দানা
-২২. নিজল দানা কী দ্বারা গঠিত? ক) কার্বোহাইড্রেট খ) রাইবোনিউক্লিওপ্রোটিন গ) লিপিড ঘ) গ্লাইকোপ্রোটিন উত্তর: খ) রাইবোনিউক্লিওপ্রোটিন
-২৩. নিউরোনকে দৃঢ়তা প্রদান করে এবং আকার বজায় রাখে কে? ক) নিউরোফাইব্রিল খ) নিজল দানা গ) লাইসোজোম ঘ) গলগি বস্তু উত্তর: ক) নিউরোফাইব্রিল
-২৪. স্নায়ুকোশ বিভাজিত হতে পারে না কেন? ক) নিউক্লিয়াস না থাকায় খ) সেন্ট্রোজোম অনুন্নত ও নিষ্ক্রিয় থাকায় গ) নিজল দানা থাকায় ঘ) মাইটোকনড্রিয়া না থাকায় উত্তর: খ) সেন্ট্রোজোম অনুন্নত ও নিষ্ক্রিয় থাকায়
-২৫. স্নায়ুকোশের কোশ চক্রে কোন দশাটি স্থায়ী হয়? ক) G1 দশা খ) G2দশা গ) S দশা ঘ) G0 (জি-জিরো) দশা উত্তর: ঘ) G0 (জি-জিরো) দশা
-২৬. কোশদেহ থেকে নির্গত ক্ষুদ্র ও শাখা-প্রশাখাযুক্ত সংজ্ঞাবহ প্রবর্ধককে কী বলে? ক) অ্যাক্সন খ) ডেনড্রন গ) সোয়ান কোশ ঘ) নিউরোফাইব্রিল উত্তর: খ) ডেনড্রন
-২৭. ডেনড্রনের এক-একটি ছোট শাখাকে কী বলা হয়? ক) অ্যাক্সন খ) ডেনড্রাইট গ) সাইন্যাপস ঘ) র‍্যানভিয়ারের পর্ব উত্তর: খ) ডেনড্রাইট
-২৮. পূর্ববর্তী নিউরোন বা গ্রাহক থেকে আবেগ গ্রহণ করে কোশদেহে প্রেরণ করে কে? ক) অ্যাক্সন খ) ডেনড্রন গ) মায়েলিন সিদ ঘ) অ্যাক্সোলেমা উত্তর: খ) ডেনড্রন
-২৯. নিউরোনের দীর্ঘ ও আজ্ঞাবহ প্রবর্ধককে কী বলে? ক) অ্যাক্সন খ) ডেনড্রন গ) নিজল দানা ঘ) কোশদেহ উত্তর: ক) অ্যাক্সন
-৩০. কোশদেহের যে অংশ থেকে অ্যাক্সনের উৎপত্তি হয়, তাকে কী বলে? ক) অ্যাক্সোলেমা খ) অ্যাক্সন হিলক গ) নিউরিলেমা ঘ) সোয়ান কোশ উত্তর: খ) অ্যাক্সন হিলক
-৩১. অ্যাক্সনের সাইটোপ্লাজমকে কী বলে? ক) সাইটোসল খ) নিউরোপ্লাজম গ) অ্যাক্সোপ্লাজম ঘ) সারকোপ্লাজম উত্তর: গ) অ্যাক্সোপ্লাজম
-৩২. অ্যাক্সনের বাইরের আবরণকে কী বলা হয়? ক) অ্যাক্সোলেমা খ) প্লাজমালেমা গ) নিউরিলেমা ঘ) ডুরা ম্যাটার উত্তর: ক) অ্যাক্সোলেমা
-৩৩. অ্যাক্সনের উপরে থাকা আবরণীটিকে কী বলে? ক) এন্ডোনিউরিয়াম খ) পেরিনিউরিয়াম গ) মেডুলারি আবরণ বা মায়েলিন সিদ ঘ) এপিনিউরিয়াম উত্তর: গ) মেডুলারি আবরণ বা মায়েলিন সিদ
-৩৪. মায়েলিন সিদ-এর বাইরের আবরণকে কী বলে? ক) নিউরিলেমা খ) অ্যাক্সোলেমা গ) এপিনিউরিয়াম ঘ) মেনিনজেস উত্তর: ক) নিউরিলেমা
-৩৫. মেডুলারি আবরণ ও নিউরিলেমার অন্তর্বর্তী স্থানে কোন কোশ থাকে? ক) গ্লিয়াল কোশ খ) সোয়ান কোশ গ) গবলেট কোশ ঘ) মাস্ট কোশ উত্তর: খ) সোয়ান কোশ
-৩৬. অ্যাক্সনের মেডুলারি আবরণ স্থানে স্থানে বিচ্ছিন্ন হয়ে যে পর্ব গঠন করে, তাকে কী বলে? ক) অ্যাক্সন হিলক খ) সাইন্যাপটিক ক্লেফ্ট গ) র‍্যানভিয়ারের পর্ব ঘ) গ্যাংলিয়ন উত্তর: গ) র‍্যানভিয়ারের পর্ব
-৩৭. কোশদেহ থেকে আবেগ দূরে নিয়ে যায় (পরবর্তী নিউরোনে বা কারকে বহন করে) কে? ক) ডেনড্রন খ) অ্যাক্সন গ) সোয়ান কোশ ঘ) নিজল দানা উত্তর: খ) অ্যাক্সন
-৩৮. অ্যাক্সনকে ঘিরে মায়েলিন আবরণী উপস্থিত থাকলে তাকে কী ধরনের নিউরোন বলে? ক) নন-মেডুলেটেড খ) মেডুলেটেড গ) সংজ্ঞাবহ ঘ) আজ্ঞাবহ উত্তর: খ) মেডুলেটেড
-৩৯. মেডুলেটেড নিউরোনে উদ্দীপনা পরিবহণের গতি কেমন হয়? ক) অত্যন্ত ধীর খ) অত্যন্ত দ্রুত গ) মাঝারি ঘ) অপরিবর্তিত থাকে উত্তর: খ) অত্যন্ত দ্রুত
-৪০. মায়েলিন আবরণী অনুপস্থিত থাকলে তাকে কী ধরনের নিউরোন বলে? ক) মেডুলেটেড খ) নন-মেডুলেটেড গ) সেনসরি ঘ) মোটর উত্তর: খ) নন-মেডুলেটেড
-৪১. কাজ অনুসারে নিউরোন কয় প্রকারের হয়? ক) ২ প্রকার খ) ৩ প্রকার গ) ৪ প্রকার ঘ) ৫ প্রকার উত্তর: খ) ৩ প্রকার
-৪২. গ্রাহক থেকে উদ্দীপনা কেন্দ্রীয় স্নায়ুতন্ত্রে প্রেরণ করে কোন নিউরোন? ক) আজ্ঞাবহ বা মোটর নিউরোন খ) সংজ্ঞাবহ বা সেনসরি নিউরোন গ) সহযোগী নিউরোন ঘ) গ্যাংলিয়ন উত্তর: খ) সংজ্ঞাবহ বা সেনসরি নিউরোন
-৪৩. স্নায়ু স্পন্দন বা সাড়া কেন্দ্রীয় স্নায়ুতন্ত্র থেকে ইফেক্টরে নিয়ে যায় কে? ক) সংজ্ঞাবহ নিউরোন খ) সহযোগী নিউরোন গ) আজ্ঞাবহ বা মোটর নিউরোন ঘ) রিসেপ্টর উত্তর: গ) আজ্ঞাবহ বা মোটর নিউরোন
-৪৪. সংজ্ঞাবহ ও আজ্ঞাবহ নিউরোনের মধ্যে সংযোগ সাধন করে কোন নিউরোন? ক) সহযোগী বা অ্যাডজাস্টর নিউরোন খ) মোটর নিউরোন গ) সেনসরি নিউরোন ঘ) সোয়ান কোশ উত্তর: ক) সহযোগী বা অ্যাডজাস্টর নিউরোন
-৪৫. স্নায়ুতন্ত্রে একপ্রকার পরিবর্তিত যোগকলা কোনটি যা উদ্দীপনা পরিবহণ করতে পারে না? ক) অ্যাক্সন খ) ডেনড্রন গ) নিউরোগ্লিয়া ঘ) সিন্যাপস উত্তর: গ) নিউরোগ্লিয়া
-৪৬. স্নায়ুতন্ত্রের কোশসমষ্টির প্রায় কত শতাংশ নিউরোগ্লিয়া দিয়ে গঠিত? ক) ৫০% খ) ৭০% গ) ৮০% ঘ) ৯০% উত্তর: ঘ) ৯০%
-৪৭. স্নায়ুতন্ত্রে 'ধারক কোশ' হিসেবে কাজ করে কোনটি? ক) নিউরোন খ) নিউরোগ্লিয়া গ) রক্তবাহ ঘ) পেশিকোশ উত্তর: খ) নিউরোগ্লিয়া
-৪৮. আকৃতি অনুসারে নিউরোগ্লিয়া কয় প্রকারের হয়? ক) ২ প্রকার খ) ৩ প্রকার গ) ৪ প্রকার ঘ) ৫ প্রকার উত্তর: খ) ৩ প্রকার
-৪৯. তারকাকার নিউরোগ্লিয়াকে কী বলা হয়? ক) অ্যাস্ট্রোসাইট খ) অলিগোডেনড্রোগ্লিয়া গ) মাইক্রোগ্লিয়া ঘ) সোয়ান কোশ উত্তর: ক) অ্যাস্ট্রোসাইট
-৫০. স্বল্প প্রবর্ধকযুক্ত নিউরোগ্লিয়াকে কী বলে? ক) মাইক্রোগ্লিয়া খ) অ্যাস্ট্রোসাইট গ) অলিগোডেনড্রোগ্লিয়া ঘ) নিজল দানা উত্তর: গ) অলিগোডেনড্রোগ্লিয়া
-৫১. ক্ষুদ্রাকার নিউরোগ্লিয়াকে কী বলে? ক) অ্যাস্ট্রোসাইট খ) অলিগোডেনড্রোগ্লিয়া গ) মাইক্রোগ্লিয়া ঘ) অ্যাক্সন উত্তর: গ) মাইক্রোগ্লিয়া
-৫২. যোগকলার আবরণীবেষ্টিত, রক্তবাহ ও ফ্যাটকোশ যুক্ত স্নায়ুতন্তুগুচ্ছকে কী বলে? ক) নিউরোন খ) নিউরোগ্লিয়া গ) স্নায়ু বা নার্ভ ঘ) সাইন্যাপস উত্তর: গ) স্নায়ু বা নার্ভ
-৫৩. প্রান্তীয় স্নায়ুতন্ত্রে অবস্থিত নিউরোনের কোন অংশ যোগকলার আবরণী দ্বারা আবৃত হয়ে নার্ভ গঠন করে? ক) কোশদেহ খ) ডেনড্রন গ) অ্যাক্সন ঘ) নিজল দানা উত্তর: গ) অ্যাক্সন
-৫৪. নার্ভের গঠনে প্রতিটি অ্যাক্সনকে ঘিরে থাকা আবরণকে কী বলে? ক) এন্ডোনিউরিয়াম খ) পেরিনিউরিয়াম গ) এপিনিউরিয়াম ঘ) মায়েলিন সিদ উত্তর: ক) এন্ডোনিউরিয়াম
-৫৫. একাধিক নার্ভতন্তু মিলে কী গঠন করে? ক) গ্যাংলিয়ন খ) ফ্যাসিকল গ) সাইন্যাপস ঘ) কোশদেহ উত্তর: খ) ফ্যাসিকল
-৫৬. নার্ভের ফ্যাসিকল কোন আবরণ দিয়ে আবৃত থাকে? ক) এন্ডোনিউরিয়াম খ) পেরিনিউরিয়াম গ) এপিনিউরিয়াম ঘ) অ্যাক্সোলেমা উত্তর: খ) পেরিনিউরিয়াম
-৫৭. অসংখ্য ফ্যাসিকল একত্রে কোন আবরণ দ্বারা আবৃত হয়ে একটি সম্পূর্ণ নার্ভ গঠন করে? ক) পেরিনিউরিয়াম খ) এন্ডোনিউরিয়াম গ) এপিনিউরিয়াম ঘ) নিউরিলেমা উত্তর: গ) এপিনিউরিয়াম
-৫৮. নিচের কোনটি স্নায়ুর গঠনের সঠিক ক্রম? ক) স্নায়ু → স্নায়ুতন্তু → স্নায়ুকোশ খ) স্নায়ুকোশ → স্নায়ুতন্তু → স্নায়ু গ) স্নায়ুতন্তু → স্নায়ুকোশ → স্নায়ু ঘ) স্নায়ু → স্নায়ুকোশ → স্নায়ুতন্তু উত্তর: খ) স্নায়ুকোশ → স্নায়ুতন্তু → স্নায়ু
-৫৯. স্নায়ুর মধ্যে কোন উপাদানটি উপস্থিত থাকে? ক) ফ্যাটকোশ খ) পেশিকোশ গ) তরুণাস্থি ঘ) লসিকাগ্রন্থি উত্তর: ক) ফ্যাটকোশ
-৬০. কাজ অনুসারে স্নায়ু কয় প্রকারের হয়? ক) ২ প্রকার খ) ৩ প্রকার গ) ৪ প্রকার ঘ) ৫ প্রকার উত্তর: খ) ৩ প্রকার
-৬১. যে স্নায়ু বার্তা বা সাড়া কেন্দ্রীয় স্নায়ুতন্ত্র থেকে ইফেক্টরে বহন করে তাকে কী বলে? ক) অন্তর্বাহী স্নায়ু খ) বহির্বাহী স্নায়ু (Efferent nerve) গ) মিশ্র স্নায়ু ঘ) সংজ্ঞাবহ স্নায়ু উত্তর: খ) বহির্বাহী স্নায়ু (Efferent nerve)
-৬২. বহির্বাহী স্নায়ু কোন নিউরোন দিয়ে গঠিত হয়? ক) সেনসরি নিউরোন খ) মোটর নিউরোন গ) সহযোগী নিউরোন ঘ) অ্যাডজাস্টর নিউরোন উত্তর: খ) মোটর নিউরোন
-৬৩. অকিউলোমোটর স্নায়ু কী ধরনের স্নায়ুর উদাহরণ? ক) অন্তর্বাহী স্নায়ু খ) বহির্বাহী স্নায়ু গ) মিশ্র স্নায়ু ঘ) স্বয়ংক্রিয় স্নায়ু উত্তর: খ) বহির্বাহী স্নায়ু
-৬৪. স্পাইনাল অ্যাকসেসরি স্নায়ু কোন প্রকারের স্নায়ু? ক) বহির্বাহী স্নায়ু খ) অন্তর্বাহী স্নায়ু গ) মিশ্র স্নায়ু ঘ) সংজ্ঞাবহ স্নায়ু উত্তর: ক) বহির্বাহী স্নায়ু
-৬৫. যে স্নায়ু রিসেপ্টর থেকে উদ্দীপনা কেন্দ্রীয় স্নায়ুতন্ত্রে বহন করে, তাকে কী বলে? ক) বহির্বাহী স্নায়ু খ) অন্তর্বাহী স্নায়ু (Afferent nerve) গ) মিশ্র স্নায়ু ঘ) মোটর স্নায়ু উত্তর: খ) অন্তর্বাহী স্নায়ু (Afferent nerve)
-৬৬. অন্তর্বাহী স্নায়ু কোন নিউরোন দিয়ে গঠিত? ক) মোটর নিউরোন খ) সেনসরি নিউরোন গ) সহযোগী নিউরোন ঘ) মিশ্র নিউরোন উত্তর: খ) সেনসরি নিউরোন
-৬৭. অলফ্যাক্টরি স্নায়ু কোন প্রকার স্নায়ুর উদাহরণ? ক) বহির্বাহী স্নায়ু খ) অন্তর্বাহী স্নায়ু গ) মিশ্র স্নায়ু ঘ) মোটর স্নায়ু উত্তর: খ) অন্তর্বাহী স্নায়ু
-৬৮. অপটিক স্নায়ু ও অডিটরি স্নায়ু কী ধরনের স্নায়ু? ক) অন্তর্বাহী স্নায়ু খ) বহির্বাহী স্নায়ু গ) মিশ্র স্নায়ু ঘ) আজ্ঞাবহ স্নায়ু উত্তর: ক) অন্তর্বাহী স্নায়ু
-৬৯. যে স্নায়ু সেনসরি ও মোটর উভয় প্রকার নিউরোনের সমন্বয়ে গঠিত তাকে কী বলে? ক) অন্তর্বাহী স্নায়ু খ) মিশ্র স্নায়ু গ) বহির্বাহী স্নায়ু ঘ) সহযোগী স্নায়ু উত্তর: খ) মিশ্র স্নায়ু
-৭০. মিশ্র স্নায়ু কোন দিকে স্নায়ু স্পন্দন পরিবহণ করতে পারে? ক) কেবল কেন্দ্রের দিকে খ) কেবল কারকের দিকে গ) উভয় মুখে ঘ) কোনো দিকেই পারে না উত্তর: গ) উভয় মুখে
-৭১. দশম করোটিক স্নায়ু 'ভেগাস নার্ভ' কোন প্রকারের স্নায়ু? ক) অন্তর্বাহী স্নায়ু খ) বহির্বাহী স্নায়ু গ) মিশ্র স্নায়ু ঘ) সেনসরি স্নায়ু উত্তর: গ) মিশ্র স্নায়ু
-৭২. সপ্তম করোটিক স্নায়ু 'ফেসিয়াল নার্ভ' কী ধরনের স্নায়ু? ক) মিশ্র স্নায়ু খ) বহির্বাহী স্নায়ু গ) অন্তর্বাহী স্নায়ু ঘ) সংজ্ঞাবহ স্নায়ু উত্তর: ক) মিশ্র স্নায়ু
-৭৩. কেন্দ্রীয় স্নায়ুতন্ত্রের বাইরে কয়েকটি স্নায়ুকোশের কোশদেহগুলি যোগকলার আবরণী দিয়ে ঢাকা থেকে যে স্ফীত গ্রন্থি তৈরি করে, তাকে কী বলে? ক) সাইন্যাপস খ) স্নায়ুগ্রন্থি বা নার্ভ গ্যাংলিয়ন গ) ফ্যাসিকল ঘ) মেনিনজেস উত্তর: খ) স্নায়ুগ্রন্থি বা নার্ভ গ্যাংলিয়ন
-৭৪. স্নায়ু বা নার্ভ সৃষ্টি করা কার প্রধান কাজ? ক) নিউরোগ্লিয়া খ) সাইন্যাপস গ) স্নায়ুগ্রন্থি বা গ্যাংলিয়ন ঘ) সোয়ান কোশ উত্তর: গ) স্নায়ুগ্রন্থি বা গ্যাংলিয়ন
-৭৫. স্নায়ুগ্রন্থি থেকে ক্ষরিত নিউরোসিক্রেশন রসে প্রচুর পরিমাণে কী থাকে? ক) হরমোন খ) উৎসেচক গ) নিউরোট্রান্সমিটার ঘ) লিপিড উত্তর: গ) নিউরোট্রান্সমিটার
-৭৬. দুটি নিউরোনের সংযোগস্থলকে কী বলা হয়? ক) গ্যাংলিয়ন খ) সাইন্যাপস বা স্নায়ুসন্নিধি গ) র্যানভিয়ারের পর্ব ঘ) অ্যাক্সন হিলক উত্তর: খ) সাইন্যাপস বা স্নায়ুসন্নিধি
-৭৭. সাইন্যাপস প্রধানত কোন দুটি অংশের মিলনে গঠিত হয়? ক) ডেনড্রন ও ডেনড্রন খ) পূর্ববর্তী নিউরোনের অ্যাক্সন এবং পরবর্তী নিউরোনের ডেনড্রন গ) অ্যাক্সন ও অ্যাক্সন ঘ) কোশদেহ ও কোশদেহ উত্তর: খ) পূর্ববর্তী নিউরোনের অ্যাক্সন এবং পরবর্তী নিউরোনের ডেনড্রন
-৭৮. অ্যাক্সন ও ডেনড্রনের মিলনস্থলে থাকা সামান্য ফাঁকটিকে কী বলে? ক) সাইন্যাপটিক ক্লেফ্ট বা সন্নিধি প্রণালী খ) প্রাক্সন্নিধি পর্দা গ) অ্যাক্সোলেমা ঘ) সাইন্যাপটিক ভেসিকল উত্তর: ক) সাইন্যাপটিক ক্লেফ্ট বা সন্নিধি প্রণালী
-৭৯. অ্যাক্সনের শেষপ্রান্তে থাকা সাইন্যাপটিক ভেসিকলের মধ্যে কোন রাসায়নিক পদার্থ থাকে? ক) অ্যাড্রিনালিন খ) থাইরক্সিন গ) অ্যাসিটাইল কোলিন ঘ) সোমাটোট্রপিক হরমোন উত্তর: গ) অ্যাসিটাইল কোলিন
-৮০. যেসব রাসায়নিক পদার্থ এক নিউরোন থেকে অপর নিউরোনে স্নায়ুস্পন্দন প্রবাহিত করে, তাদের কী বলে? ক) নিউরোফাইব্রিল খ) নিউরোট্রান্সমিটার গ) হরমোন ঘ) ফেরোমোন উত্তর: খ) নিউরোট্রান্সমিটার
-৮১. নিউরোট্রান্সমিটারের একটি প্রকৃষ্ট উদাহরণ হলো— ক) ইনসুলিন খ) অ্যাসিটাইল কোলিন গ) গ্লুকাগন ঘ) পেপসিন উত্তর: খ) অ্যাসিটাইল কোলিন
-৮২. স্নায়ু-উদ্দীপনা প্রাক্সন্নিধি স্ফীতিতে পৌঁছালে 'অ্যাসিটাইল কোলিন' পূর্ণ থলিগুলি বিদীর্ণ হয়ে কোলিন কোথায় মুক্ত হয়? ক) কোশদেহে খ) সন্নিধি প্রণালী বা ক্লেফ্ট-এ গ) রক্তে ঘ) লসিকায় উত্তর: খ) সন্নিধি প্রণালী বা ক্লেফ্ট-এ
-৮৩. সাইন্যাপসের প্রধান কাজ কী? ক) রক্ত সঞ্চালন নিয়ন্ত্রণ করা খ) এক নিউরোন থেকে অপর নিউরোনে স্নায়ুস্পন্দন প্রবাহিত করা গ) প্রোটিন তৈরি করা ঘ) কোশ বিভাজনে সাহায্য করা উত্তর: খ) এক নিউরোন থেকে অপর নিউরোনে স্নায়ুস্পন্দন প্রবাহিত করা
-৮৪. স্নায়বিক উদ্দীপনা প্রবাহের অভিমুখ সর্বদাই একমুখী রাখে বলে সাইন্যাপসকে কী বলা হয়? ক) শারীরবৃত্তীয় ভাল্ভ (Physiological valve) খ) রাসায়নিক সমন্বয়ক গ) ভৌত সমন্বয়ক ঘ) ধারক কোশ উত্তর: ক) শারীরবৃত্তীয় ভাল্ভ (Physiological valve)
-৮৫. গঠনগতভাবে স্নায়ুতন্ত্রকে প্রধান কয়টি ভাগে ভাগ করা যায়? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: ক) ২টি (কেন্দ্রীয় ও প্রান্তীয়)
-৮৬. কেন্দ্রীয় স্নায়ুতন্ত্র (CNS) কী কী নিয়ে গঠিত? ক) মস্তিষ্ক ও করোটীয় স্নায়ু খ) সুষুম্নাকাণ্ড ও সুষুম্নাস্নায়ু গ) মস্তিষ্ক এবং সুষুম্নাকাণ্ড ঘ) গ্যাংলিয়ন ও নার্ভ উত্তর: গ) মস্তিষ্ক এবং সুষুম্নাকাণ্ড
-৮৭. মানবদেহের স্নায়ুতন্ত্রের প্রধান নিয়ন্ত্রক অঞ্চল কোনটি? ক) স্বয়ংক্রিয় স্নায়ুতন্ত্র খ) প্রান্তীয় স্নায়ুতন্ত্র গ) কেন্দ্রীয় স্নায়ুতন্ত্র ঘ) সোমাটিক স্নায়ুতন্ত্র উত্তর: গ) কেন্দ্রীয় স্নায়ুতন্ত্র
-৮৮. প্রান্তীয় স্নায়ুতন্ত্র (PNS) কী নিয়ে গঠিত হয়? ক) মস্তিষ্ক ও সুষুম্নাকাণ্ড খ) করোটীয় স্নায়ু এবং সুষুম্নাস্নায়ু গ) সোমাটিক ও স্বয়ংক্রিয় স্নায়ুতন্ত্র ঘ) সমবেদী ও পরাসমবেদী স্নায়ুতন্ত্র উত্তর: খ) করোটীয় স্নায়ু এবং সুষুম্নাস্নায়ু
-৮৯. মস্তিষ্ক থেকে নির্গত করোটীয় স্নায়ুর সংখ্যা কত জোড়া? ক) ১০ জোড়া খ) ১২ জোড়া গ) ৩১ জোড়া ঘ) ৩৩ জোড়া উত্তর: খ) ১২ জোড়া
-৯০. সুষুম্নাকাণ্ড থেকে নির্গত সুষুম্নাস্নায়ুর সংখ্যা কত জোড়া? ক) ১২ জোড়া খ) ২১ জোড়া গ) ৩১ জোড়া ঘ) ৪৩ জোড়া উত্তর: গ) ৩১ জোড়া
-৯১. গ্রাহক থেকে উদ্দীপনা গ্রহণ করে কোথায় প্রেরণ করা হয়? ক) কেন্দ্রীয় স্নায়ুতন্ত্রে খ) সোমাটিক স্নায়ুতন্ত্রে গ) কারকে ঘ) পেশিতে উত্তর: ক) কেন্দ্রীয় স্নায়ুতন্ত্রে
-৯২. কারক অঙ্গে (পেশি বা গ্রন্থি) সাড়া প্রেরণ করা প্রধানত কার কাজ? ক) প্রান্তীয় স্নায়ুতন্ত্রের মাধ্যমে কেন্দ্রীয় স্নায়ুতন্ত্রের খ) শুধুমাত্র স্বয়ংক্রিয় স্নায়ুতন্ত্রের গ) গ্রাহকের ঘ) হরমোনের উত্তর: ক) প্রান্তীয় স্নায়ুতন্ত্রের মাধ্যমে কেন্দ্রীয় স্নায়ুতন্ত্রের
-৯৩. কার্যগত বা কাজের ভিত্তিতে স্নায়ুতন্ত্রকে কয়টি ভাগে ভাগ করা যায়? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: ক) ২টি (সোমাটিক ও স্বয়ংক্রিয়)
-৯৪. যে স্নায়ুতন্ত্র প্রাণিদেহের ঐচ্ছিক ক্রিয়াবলিকে নিয়ন্ত্রণ করে, তাকে কী বলে? ক) প্রান্তীয় স্নায়ুতন্ত্র খ) স্বয়ংক্রিয় স্নায়ুতন্ত্র গ) সোমাটিক স্নায়ুতন্ত্র ঘ) সমবেদী স্নায়ুতন্ত্র উত্তর: গ) সোমাটিক স্নায়ুতন্ত্র
-৯৫. দেহের কঙ্কাল পেশিসমূহের কার্যাবলি নিয়ন্ত্রণের সাথে কোন স্নায়ুতন্ত্র যুক্ত? ক) সোমাটিক স্নায়ুতন্ত্র খ) স্বয়ংক্রিয় স্নায়ুতন্ত্র গ) পরাসমবেদী স্নায়ুতন্ত্র ঘ) সমবেদী স্নায়ুতন্ত্র উত্তর: ক) সোমাটিক স্নায়ুতন্ত্র
-৯৬. দেহের অভ্যন্তরের বিভিন্ন অঙ্গ-প্রত্যঙ্গের অনৈচ্ছিক ক্রিয়াবলি নিয়ন্ত্রণ করে কে? ক) সোমাটিক স্নায়ুতন্ত্র খ) কেন্দ্রীয় স্নায়ুতন্ত্র গ) স্বয়ংক্রিয় বা অটোনমিক স্নায়ুতন্ত্র (ANS) ঘ) ঐচ্ছিক স্নায়ুতন্ত্র উত্তর: গ) স্বয়ংক্রিয় বা অটোনমিক স্নায়ুতন্ত্র (ANS)
-৯৭. দেহের ভিতরের যন্ত্র বা ভিসেরা (Viscera)-র কাজের সাথে যুক্ত থাকায় স্বয়ংক্রিয় স্নায়ুতন্ত্রকে আর কী বলা হয়? ক) সেন্ট্রাল স্নায়ুতন্ত্র খ) সোমাটিক স্নায়ুতন্ত্র গ) ভিসারাল স্নায়ুতন্ত্র ঘ) পেরিফেরাল স্নায়ুতন্ত্র উত্তর: গ) ভিসারাল স্নায়ুতন্ত্র
-৯৮. শ্বাসক্রিয়ার হার এবং হৃদস্পন্দন নিয়ন্ত্রিত হয় কোন স্নায়ুতন্ত্রের দ্বারা? ক) সোমাটিক স্নায়ুতন্ত্র খ) স্বয়ংক্রিয় স্নায়ুতন্ত্র গ) কেন্দ্রীয় স্নায়ুতন্ত্র ঘ) প্রান্তীয় স্নায়ুতন্ত্র উত্তর: খ) স্বয়ংক্রিয় স্নায়ুতন্ত্র
-৯৯. স্বয়ংক্রিয় স্নায়ুতন্ত্র কয় প্রকারের হয়? ক) ২ প্রকার (সমবেদী ও পরাসমবেদী) খ) ৩ প্রকার গ) ৪ প্রকার ঘ) ৫ প্রকার উত্তর: ক) ২ প্রকার (সমবেদী ও পরাসমবেদী)
-১০০. জীবদেহে আপৎকালীন বা জরুরি অবস্থার সৃষ্টি হলে কোন স্নায়ুতন্ত্র সক্রিয় হয়? ক) পরাসমবেদী স্নায়ুতন্ত্র খ) সমবেদী স্নায়ুতন্ত্র গ) সোমাটিক স্নায়ুতন্ত্র ঘ) কেন্দ্রীয় স্নায়ুতন্ত্র উত্তর: খ) সমবেদী স্নায়ুতন্ত্র
-_T5_
-১. প্রাণীদের বুদ্ধি, চিন্তা, স্মৃতি ইত্যাদি নিয়ন্ত্রণ করার প্রধান স্নায়ুকেন্দ্র কোনটি? ক) সুষুম্নাকাণ্ড খ) মস্তিষ্ক গ) গ্যাংলিয়ন ঘ) সাইন্যাপস উত্তর: খ) মস্তিষ্ক
-২. মানুষের মস্তিষ্ক কোথায় সুরক্ষিত থাকে? ক) বক্ষগহ্বরে খ) মেরুদণ্ডের গহ্বরে গ) করোটির (খুলির) মধ্যে ঘ) উদরগহ্বরে উত্তর: গ) করোটির (খুলির) মধ্যে
-৩. একজন পূর্ণবয়স্ক মানুষের মস্তিষ্কের ওজন প্রায় কত? ক) ১.০ কেজি খ) ১.২ কেজি গ) ১.৩৬ কেজি ঘ) ১.৫ কেজি উত্তর: গ) ১.৩৬ কেজি
-৪. মানুষের মস্তিষ্কে প্রায় কত সংখ্যক স্নায়ুকোশ বা নিউরোন থাকে? ক) ৫ শত কোটি খ) ১০ শত কোটি গ) ১৫ শত কোটি ঘ) ২০ শত কোটি উত্তর: খ) ১০ শত কোটি
-৫. মানুষের মস্তিষ্ক প্রধানত কয়টি অংশে বিভক্ত? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: খ) ৩টি
-৬. মস্তিষ্কের প্রধান তিনটি অংশ কী কী? ক) গুরুমস্তিষ্ক, লঘুমস্তিষ্ক, সুষুম্নাকাণ্ড খ) অগ্রমস্তিষ্ক, মধ্যমস্তিষ্ক, পশ্চাদ মস্তিষ্ক গ) থ্যালামাস, হাইপোথ্যালামাস,পনস ঘ) ডুরা ম্যাটার, পিয়া ম্যাটার, অ্যারাকনয়েড ম্যাটার উত্তর: খ) অগ্রমস্তিষ্ক, মধ্যমস্তিষ্ক, পশ্চাদ মস্তিষ্ক
-৭. অগ্রমস্তিষ্কের (Fore brain) প্রধান দুটি অংশ কী কী? ক) টেলেনসেফালন ও ডায়েনসেফালন খ) মেটেনসেফালন ও মায়েলেনসেফালন গ) পনস ও লঘুমস্তিষ্ক ঘ) টেকটাম ও সেরিব্রাল পেডাঙ্কল উত্তর: ক) টেলেনসেফালন ও ডায়েনসেফালন
-৮. গুরুমস্তিষ্ক বা সেরিব্রাল কর্টেক্স অগ্রমস্তিষ্কের কোন অংশের অন্তর্গত? ক) ডায়েনসেফালন খ) টেলেনসেফালন গ) মেটেনসেফালন ঘ) মায়েলেনসেফালন উত্তর: খ) টেলেনসেফালন
-৯. মস্তিষ্কের সবচেয়ে বিস্তীর্ণ এলাকা জুড়ে থাকে কোন অংশ? ক) লঘুমস্তিষ্ক খ) পনস গ) গুরুমস্তিষ্ক ঘ) থ্যালামাস উত্তর: গ) গুরুমস্তিষ্ক
-১০. গুরুমস্তিষ্কের গোলার্ধ দুটি কোন স্নায়ুযোজক দিয়ে যুক্ত থাকে? ক) ভারমিজ খ) করপাস ক্যালোসাম গ) অপটিক কায়াজমা ঘ) মেনিনজেস উত্তর: খ) করপাস ক্যালোসাম
-১১. গুরুমস্তিষ্কের অসংখ্য ভাঁজগুলিকে কী বলে? ক) সালকাস খ) জাইরাস গ) টেকটাম ঘ) ভেন্ট্রিকল উত্তর: খ) জাইরাস
-১২. গুরুমস্তিষ্কের অসংখ্য খাঁজগুলিকে কী বলা হয়? ক) সালকাস খ) জাইরাস গ) ভারমিজ ঘ) পনস উত্তর: ক) সালকাস
-১৩. চাপ, তাপ, ব্যথা, দর্শন, শ্রবণ ইত্যাদি স্পর্শ বোধ নিয়ন্ত্রণ করে কে? ক) থ্যালামাস খ) গুরুমস্তিষ্ক গ) লঘুমস্তিষ্ক ঘ) সুষুম্নাশীর্ষক উত্তর: খ) গুরুমস্তিষ্ক
-১৪. ডায়েনসেফালন অংশের অন্তর্গত দুটি অংশের নাম কী? ক) পনস ও লঘুমস্তিষ্ক খ) থ্যালামাস ও হাইপোথ্যালামাস গ) গুরুমস্তিষ্ক ও মধ্যমস্তিষ্ক ঘ) সুষুম্নাশীর্ষক ও সুষুম্নাকাণ্ড উত্তর: খ) থ্যালামাস ও হাইপোথ্যালামাস
-১৫. গুরুমস্তিষ্কের প্রধান সিংহদ্বার কাকে বলা হয়? ক) হাইপোথ্যালামাস খ) লঘুমস্তিষ্ক গ) থ্যালামাস ঘ) পনস উত্তর: গ) থ্যালামাস
-১৬. থ্যালামাস মস্তিষ্কের কোন প্রকোষ্ঠের দু-পাশে অবস্থিত? ক) প্রথম প্রকোষ্ঠ খ) দ্বিতীয় প্রকোষ্ঠ গ) তৃতীয় প্রকোষ্ঠ ঘ) চতুর্থ প্রকোষ্ঠ উত্তর: গ) তৃতীয় প্রকোষ্ঠ
-১৭. ঘ্রাণ প্রবাহ ছাড়া সবরকম সংজ্ঞাবহ স্নায়ুপ্রবাহ কার মধ্য দিয়ে গুরুমস্তিষ্কে প্রবেশ করে? ক) থ্যালামাস খ) হাইপোথ্যালামাস গ) সুষুম্নাকাণ্ড ঘ) মধ্যমস্তিষ্ক উত্তর: ক) থ্যালামাস
-১৮. কান্না, পীড়ন বা হাসির মতো আবেগজনিত প্রতিবর্ত ক্রিয়া কে নিয়ন্ত্রণ করে? ক) গুরুমস্তিষ্ক খ) থ্যালামাস গ) পনস ঘ) লঘুমস্তিষ্ক উত্তর: খ) থ্যালামাস
-১৯. অপটিক কায়াজমার ঊর্ধ্বাংশ থেকে ম্যামিলারি বডি পর্যন্ত কোন অংশ বিস্তৃত থাকে? ক) থ্যালামাস খ) হাইপোথ্যালামাস গ) গুরুমস্তিষ্ক ঘ) পনস উত্তর: খ) হাইপোথ্যালামাস
-২০. সমবেদী ও পরাসমবেদী—উভয় প্রকার স্নায়ুতন্ত্রকে নিয়ন্ত্রণ করে মস্তিষ্কের কোন অংশ? ক) থ্যালামাস খ) হাইপোথ্যালামাস গ) সুষুম্নাশীর্ষক ঘ) মধ্যমস্তিষ্ক উত্তর: খ) হাইপোথ্যালামাস
-২১. ক্ষুধা, তৃষ্ণা, উত্তেজনা, উদ্বেগ ইত্যাদি মানসিক আবেগ নিয়ন্ত্রণ করে কে? ক) পনস খ) থ্যালামাস গ) হাইপোথ্যালামাস ঘ) লঘুমস্তিষ্ক উত্তর: গ) হাইপোথ্যালামাস
-২২. মানুষের দৈহিক উষ্ণতা বা তাপমাত্রা নিয়ন্ত্রণকারী মস্তিষ্কের অংশটি হলো— ক) হাইপোথ্যালামাস খ) থ্যালামাস গ) সুষুম্নাশীর্ষক ঘ) পনস উত্তর: ক) হাইপোথ্যালামাস
-২৩. অগ্রমস্তিষ্ক এবং পশ্চাদ মস্তিষ্কের মাঝখানে কোন অংশ অবস্থিত? ক) সুষুম্নাকাণ্ড খ) মধ্যমস্তিষ্ক গ) গুরুমস্তিষ্ক ঘ) থ্যালামাস উত্তর: খ) মধ্যমস্তিষ্ক
-২৪. টেকটাম ও সেরিব্রাল পেডাঙ্কল কোন মস্তিষ্কের অংশ? ক) অগ্রমস্তিষ্ক খ) পশ্চাদ মস্তিষ্ক গ) মধ্যমস্তিষ্ক ঘ) সুষুম্নাকাণ্ড উত্তর: গ) মধ্যমস্তিষ্ক
-২৫. দর্শন ও শ্রবণ নিয়ন্ত্রণ করা এবং অক্ষিগোলকের বিচলন নিয়ন্ত্রণ করা কার কাজ? ক) গুরুমস্তিষ্ক খ) মধ্যমস্তিষ্ক গ) লঘুমস্তিষ্ক ঘ) পনস উত্তর: খ) মধ্যমস্তিষ্ক
-২৬. পশ্চাদ মস্তিষ্ক (Hind brain) প্রধানত কয়টি অংশে বিভক্ত? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: ক) ২টি (মেটেনসেফালন ও মায়েলেনসেফালন)
-২৭. মেটেনসেফালন-এর অন্তর্গত অংশগুলি কী কী? ক) গুরুমস্তিষ্ক ও থ্যালামাস খ) পনস এবং লঘুমস্তিষ্ক গ) থ্যালামাস ও হাইপোথ্যালামাস ঘ) মধ্যমস্তিষ্ক ও সুষুম্নাশীর্ষক উত্তর: খ) পনস এবং লঘুমস্তিষ্ক
-২৮. মধ্যমস্তিষ্কের নীচে এবং সুষুম্নাশীর্ষকের ওপরে অবস্থিত অংশের নাম কী? ক) পনস (Pons) খ) থ্যালামাস গ) গুরুমস্তিষ্ক ঘ) লঘুমস্তিষ্ক উত্তর: ক) পনস (Pons)
-২৯. মধ্যমস্তিষ্কের সঙ্গে লঘুমস্তিষ্ক ও সুষুম্নাশীর্ষকের সংযোগ স্থাপন করে কে? ক) থ্যালামাস খ) হাইপোথ্যালামাস গ) পনস বা যোজক ঘ) ভারমিজ উত্তর: গ) পনস বা যোজক
-৩০. মূত্রনালি নিয়ন্ত্রক স্নায়ুকেন্দ্র ডেট্রুসর পেশির সংকোচন ঘটিয়ে মূত্রত্যাগে সহায়তা করে কে? ক) লঘুমস্তিষ্ক খ) গুরুমস্তিষ্ক গ) পনস ঘ) সুষুম্নাকাণ্ড উত্তর: গ) পনস
-৩১. শ্বাসক্রিয়ার হার নিয়ন্ত্রণ করে মস্তিষ্কের কোন অংশ? ক) থ্যালামাস খ) পনস গ) গুরুমস্তিষ্ক ঘ) হাইপোথ্যালামাস উত্তর: খ) পনস
-৩২. পনস ও সুষুম্নাশীর্ষকের সংযোগস্থলে করোটির পশ্চাদভাগে অবস্থিত অংশের নাম কী? ক) লঘুমস্তিষ্ক খ) গুরুমস্তিষ্ক গ) থ্যালামাস ঘ) মধ্যমস্তিষ্ক উত্তর: ক) লঘুমস্তিষ্ক
-৩৩. লঘুমস্তিষ্কের গোলার্ধ দুটি কোন স্নায়ুযোজক দিয়ে যুক্ত থাকে? ক) করপাস ক্যালোসাম খ) ভারমিজ গ) অ্যাকুইডাক্ট অফ সিলভিয়াস ঘ) মেনিনজেস উত্তর: খ) ভারমিজ
-৩৪. প্রাণীদের দেহের ভারসাম্য নিয়ন্ত্রণ করা কার প্রধান কাজ? ক) গুরুমস্তিষ্ক খ) লঘুমস্তিষ্ক গ) পনস ঘ) থ্যালামাস উত্তর: খ) লঘুমস্তিষ্ক
-৩৫. প্রত্যাবর্তী স্নায়ুকেন্দ্র (Reflex center) রূপে কাজ করে মস্তিষ্কের কোন অংশ? ক) লঘুমস্তিষ্ক খ) থ্যালামাস গ) মধ্যমস্তিষ্ক ঘ) গুরুমস্তিষ্ক উত্তর: ক) লঘুমস্তিষ্ক
-৩৬. মায়েলেনসেফালন-এর অন্তর্গত অংশের নাম কী? ক) লঘুমস্তিষ্ক খ) পনস গ) সুষুম্নাশীর্ষক (Medulla oblongata) ঘ) থ্যালামাস উত্তর: গ) সুষুম্নাশীর্ষক (Medulla oblongata)
-৩৭. পনস-এর নীচ থেকে শুরু করে সুষুম্নাকাণ্ডের অগ্রভাগ পর্যন্ত বিস্তৃত শঙ্খাবাকার অংশকে কী বলে? ক) মধ্যমস্তিষ্ক খ) লঘুমস্তিষ্ক গ) সুষুম্নাশীর্ষক ঘ) গুরুমস্তিষ্ক উত্তর: গ) সুষুম্নাশীর্ষক
-৩৮. হৃৎক্রিয়া এবং শ্বাসক্রিয়া নিয়ন্ত্রণ করে মস্তিষ্কের কোন অংশ? ক) থ্যালামাস খ) সুষুম্নাশীর্ষক গ) গুরুমস্তিষ্ক ঘ) লঘুমস্তিষ্ক উত্তর: খ) সুষুম্নাশীর্ষক
-৩৯. ঘাম নিঃসরণ নিয়ন্ত্রণ করা কার কাজ? ক) পনস খ) সুষুম্নাশীর্ষক গ) থ্যালামাস ঘ) গুরুমস্তিষ্ক উত্তর: খ) সুষুম্নাশীর্ষক
-৪০. মস্তিষ্ক এবং সুষুম্নাকাণ্ড যে ত্রিস্তরী পর্দা দ্বারা বেষ্টিত ও সুরক্ষিত থাকে, তাকে কী বলে? ক) প্লুরা খ) পেরিকার্ডিয়াম গ) মেনিনজেস ঘ) ক্যাপসুল উত্তর: গ) মেনিনজেস
-৪১. মেনিনজেসের সবচেয়ে বাইরের স্তরটির নাম কী? ক) পিয়া ম্যাটার খ) ডুরা ম্যাটার গ) অ্যারাকনয়েড ম্যাটার ঘ) করপাস ক্যালোসাম উত্তর: খ) ডুরা ম্যাটার
-৪২. মেনিনজেসের মধ্যবর্তী স্তরটির নাম কী? ক) ডুরা ম্যাটার খ) অ্যারাকনয়েড ম্যাটার গ) পিয়া ম্যাটার ঘ) ভারমিজ উত্তর: খ) অ্যারাকনয়েড ম্যাটার
-৪৩. মেনিনজেসের একেবারে ভেতরের স্তরটির নাম কী? ক) পিয়া ম্যাটার খ) ডুরা ম্যাটার গ) অ্যারাকনয়েড ম্যাটার ঘ) ভেন্ট্রিকল উত্তর: ক) পিয়া ম্যাটার
-৪৪. মস্তিষ্কের ভেতরের ফাঁকা স্থান বা প্রকোষ্ঠগুলিকে কী বলে? ক) সাইন্যাপস খ) সালকাস গ) ভেন্ট্রিকল ঘ) জাইরাস উত্তর: গ) ভেন্ট্রিকল
-৪৫. মস্তিষ্কের প্রথম ও দ্বিতীয় ভেন্ট্রিকল তৃতীয়টির সঙ্গে কী দ্বারা যুক্ত থাকে? ক) অ্যাকুইডাক্ট অফ সিলভিয়াস খ) ফোরামেন অফ মনরো গ) করপাস ক্যালোসাম ঘ) ভারমিজ উত্তর: খ) ফোরামেন অফ মনরো
-৪৬. মস্তিষ্কের তৃতীয় প্রকোষ্ঠটি চতুর্থটির সঙ্গে কী দ্বারা যুক্ত থাকে? ক) ফোরামেন অফ মনরো খ) অ্যাকুইডাক্ট অফ সিলভিয়াস গ) অপটিক কায়াজমা ঘ) ডুরা ম্যাটার উত্তর: খ) অ্যাকুইডাক্ট অফ সিলভিয়াস
-৪৭. মস্তিষ্কের ভেন্ট্রিকল বা প্রকোষ্ঠগুলির মধ্যে থাকা তরলটিকে কী বলে? ক) লসিকা খ) সাইনোভিয়াল তরল গ) সেরিব্রোস্পাইনাল ফ্লুইড (CSF) ঘ) রক্ত উত্তর: গ) সেরিব্রোস্পাইনাল ফ্লুইড (CSF)
-৪৮. মস্তিষ্ককে সুরক্ষিত রাখতে এবং পুষ্টি জোগাতে সাহায্য করে কোন তরল? ক) রক্তরস খ) CSF (সেরিব্রোস্পাইনাল ফ্লুইড) গ) জল ঘ) সাইনোভিয়াল তরল উত্তর: খ) CSF (সেরিব্রোস্পাইনাল ফ্লুইড)
-৪৯. সুষুম্নাশীর্ষকের নীচ থেকে শুরু করে মেরুদণ্ডের গহ্বরের মধ্যে অবস্থানকারী স্নায়ুকাণ্ডকে কী বলে? ক) সুষুম্নাকাণ্ড (Spinal cord) খ) মস্তিষ্ক গ) করোটিক স্নায়ু ঘ) গ্যাংলিয়ন উত্তর: ক) সুষুম্নাকাণ্ড (Spinal cord)
-৫০. সুষুম্নাকাণ্ড কোথায় সুরক্ষিত থাকে? ক) করোটির মধ্যে খ) বক্ষগহ্বরে গ) মেরুদণ্ডের গহ্বরের মধ্যে ঘ) পনসের নীচে উত্তর: গ) মেরুদণ্ডের গহ্বরের মধ্যে
-৫১. সুষুম্নাকাণ্ডের নীচের দিকের ছুঁচালো প্রান্তীয় অংশকে কী বলে? ক) ফাইলাম টারমিনেলি খ) কোনাস মেডুলারিস গ) মেনিনজেস ঘ) ভারমিজ উত্তর: খ) কোনাস মেডুলারিস
-৫২. সুষুম্নাকাণ্ডের একেবারে নীচের দিকে সরু সুতোর মতো অংশটিকে কী বলা হয়? ক) ফাইলাম টারমিনেলি খ) কোনাস মেডুলারিস গ) ডুরা ম্যাটার ঘ) সালকাস উত্তর: ক) ফাইলাম টারমিনেলি
-৫৩. সুষুম্নাকাণ্ড থেকে মোট কত জোড়া সুষুম্নাস্নায়ু নির্গত হয়? ক) ১২ জোড়া খ) ২১ জোড়া গ) ৩১ জোড়া ঘ) ৩৩ জোড়া উত্তর: গ) ৩১ জোড়া
-৫৪. দেহের বিভিন্ন প্রতিবর্ত ক্রিয়া (Reflex action) নিয়ন্ত্রণ করার প্রধান স্নায়ুকেন্দ্র হিসেবে কাজ করে কোনটি? ক) গুরুমস্তিষ্ক খ) লঘুমস্তিষ্ক গ) থ্যালামাস ঘ) সুষুম্নাকাণ্ড উত্তর: ঘ) সুষুম্নাকাণ্ড
-৫৫. প্রান্তীয় স্নায়ুতন্ত্রের ৩১ জোড়া সুষুম্নাস্নায়ু কোথা থেকে সৃষ্টি হয়? ক) মস্তিষ্ক থেকে খ) সুষুম্নাকাণ্ড থেকে গ) লঘুমস্তিষ্ক থেকে ঘ) থ্যালামাস থেকে উত্তর: খ) সুষুম্নাকাণ্ড থেকে
-৫৬. মস্তিষ্কের ৩টি প্রধান অংশের মধ্যে সবচেয়ে বড় অংশ কোনটি? ক) মধ্যমস্তিষ্ক খ) লঘুমস্তিষ্ক গ) অগ্রমস্তিষ্ক (গুরুমস্তিষ্ক অংশ) ঘ) সুষুম্নাশীর্ষক উত্তর: গ) অগ্রমস্তিষ্ক (গুরুমস্তিষ্ক অংশ)
-৫৭. মস্তিষ্কের কোন অংশে জাইরাস ও সালকাস দেখা যায়? ক) লঘুমস্তিষ্কে খ) গুরুমস্তিষ্কে গ) থ্যালামাসে ঘ) হাইপোথ্যালামাসে উত্তর: খ) গুরুমস্তিষ্কে
-৫৮. মেসেনসেফালন (Mesencephalon) মস্তিষ্কের কোন অংশের অপর নাম? ক) অগ্রমস্তিষ্ক খ) মধ্যমস্তিষ্ক গ) পশ্চাদ মস্তিষ্ক ঘ) গুরুমস্তিষ্ক উত্তর: খ) মধ্যমস্তিষ্ক
-৫৯. মানুষের মানসিক বোধ (যেমন- বুদ্ধি, স্মৃতি) নিয়ন্ত্রণ করে কোনটি? ক) লঘুমস্তিষ্ক খ) গুরুমস্তিষ্ক বা সেরিব্রাল কর্টেক্স গ) পনস ঘ) সুষুম্নাকাণ্ড উত্তর: খ) গুরুমস্তিষ্ক বা সেরিব্রাল কর্টেক্স
-৬০. করপাস ক্যালোসাম কোথায় দেখা যায়? ক) দুটি লঘুমস্তিষ্কের গোলার্ধের মাঝে খ) দুটি গুরুমস্তিষ্কের গোলার্ধের মাঝে গ) থ্যালামাসের মাঝে ঘ) সুষুম্নাকাণ্ডে উত্তর: খ) দুটি গুরুমস্তিষ্কের গোলার্ধের মাঝে
-৬১. ভারমিজ কোথায় দেখা যায়? ক) গুরুমস্তিষ্কে খ) লঘুমস্তিষ্কে গ) মধ্যমস্তিষ্কে ঘ) সুষুম্নাশীর্ষকে উত্তর: খ) লঘুমস্তিষ্কে
-৬২. মানবদেহে মেনিনজেসের স্তর কয়টি? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: খ) ৩টি
-৬৩. সুষুম্নাকাণ্ড থেকে সৃষ্ট স্নায়ুগুলি কোন স্নায়ুতন্ত্র গঠন করে? ক) কেন্দ্রীয় স্নায়ুতন্ত্র খ) প্রান্তীয় স্নায়ুতন্ত্র গ) স্বয়ংক্রিয় স্নায়ুতন্ত্র ঘ) সমবেদী স্নায়ুতন্ত্র উত্তর: খ) প্রান্তীয় স্নায়ুতন্ত্র
-৬৪. অপটিক কায়াজমা মস্তিষ্কের কোন অংশের সাথে সম্পর্কিত? ক) থ্যালামাস খ) হাইপোথ্যালামাস গ) পনস ঘ) লঘুমস্তিষ্ক উত্তর: খ) হাইপোথ্যালামাস
-৬৫. ম্যামিলারি বডি কোথায় থাকে? ক) হাইপোথ্যালামাসে খ) গুরুমস্তিষ্কে গ) মধ্যমস্তিষ্কে ঘ) সুষুম্নাশীর্ষকে উত্তর: ক) হাইপোথ্যালামাসে
-৬৬. আলোক প্রতিবর্ত (Light reflex) নিয়ন্ত্রণ করে মস্তিষ্কের কোন অংশ? ক) থ্যালামাস খ) মধ্যমস্তিষ্ক গ) লঘুমস্তিষ্ক ঘ) পনস উত্তর: খ) মধ্যমস্তিষ্ক
-৬৭. সুষুম্নাশীর্ষক (Medulla oblongata) কার অংশ? ক) মেটেনসেফালন খ) মায়েলেনসেফালন গ) টেলেনসেফালন ঘ) ডায়েনসেফালন উত্তর: খ) মায়েলেনসেফালন
-৬৮. 'সেরিব্রাল পেডাঙ্কল' মস্তিষ্কের কোথায় অবস্থান করে? ক) অগ্রমস্তিষ্ক খ) পশ্চাদ মস্তিষ্ক গ) মধ্যমস্তিষ্ক ঘ) সুষুম্নাকাণ্ড উত্তর: গ) মধ্যমস্তিষ্ক
-৬৯. 'কোনাস মেডুলারিস' অংশটি কোথায় দেখা যায়? ক) মস্তিষ্কে খ) থ্যালামাসে গ) সুষুম্নাকাণ্ডে ঘ) পনসে উত্তর: গ) সুষুম্নাকাণ্ডে
-৭০. সুষুম্নাকাণ্ডের ভেতরের কেন্দ্রীয় নালি (Central canal) কোন বস্তুর মাঝে থাকে? (চিত্র ১.৩৬ অনুযায়ী) ক) শ্বেত বস্তু খ) ধূসর বস্তু গ) ডুরা ম্যাটার ঘ) পিয়া ম্যাটার উত্তর: খ) ধূসর বস্তু
-৭১. সুষুম্নাকাণ্ডের বাইরের দিকে কোন বস্তু থাকে? (চিত্র ১.৩৬ অনুযায়ী) ক) ধূসর বস্তু খ) শ্বেত বস্তু গ) সাইন্যাপস ঘ) রিসেপ্টর উত্তর: খ) শ্বেত বস্তু
-৭২. সুষুম্নাকাণ্ড থেকে উৎপন্ন আজ্ঞাবহ ও সংজ্ঞাবহ নিউরোন কার সাথে যুক্ত থাকে? ক) ভেন্ট্রিকল খ) পেশি বা গ্রাহক গ) করপাস ক্যালোসাম ঘ) হাইপোথ্যালামাস উত্তর: খ) পেশি বা গ্রাহক
-৭৩. মেনিনজেস আবরণী কাকে ঘিরে থাকে? ক) শুধুমাত্র মস্তিষ্ককে খ) শুধুমাত্র সুষুম্নাকাণ্ডকে গ) মস্তিষ্ক এবং সুষুম্নাকাণ্ড উভয়কে ঘ) হৃৎপিণ্ডকে উত্তর: গ) মস্তিষ্ক এবং সুষুম্নাকাণ্ড উভয়কে
-৭৪. মানুষের করোটির অভ্যন্তরে কোন অঙ্গটি সুরক্ষিত থাকে? ক) ফুসফুস খ) মস্তিষ্ক গ) যকৃৎ ঘ) পাকস্থলী উত্তর: খ) মস্তিষ্ক
-৭৫. ভেন্ট্রিকল বা প্রকোষ্ঠের সংখ্যা মস্তিষ্কে কয়টি? ক) ২টি খ) ৩টি গ) ৪টি ঘ) ৫টি উত্তর: গ) ৪টি
-_T6_
-৭৬. বাহ্যিক উদ্দীপনার প্রভাবে জীবদেহে যে স্বতঃস্ফূর্ত ও দ্রুত সাড়া প্রদান ঘটে, তাকে কী বলে? ক) চলন খ) গমন গ) প্রতিবর্ত ক্রিয়া ঘ) উপযোজন উত্তর: গ) প্রতিবর্ত ক্রিয়া
-৭৭. উৎপত্তিগতভাবে বা প্রকৃতির ওপর ভিত্তি করে প্রতিবর্ত ক্রিয়া প্রধানত কয় প্রকারের হয়? ক) ২ প্রকার খ) ৩ প্রকার গ) ৪ প্রকার ঘ) ৫ প্রকার উত্তর: ক) ২ প্রকার
-৭৮. যে প্রতিবর্ত ক্রিয়া জন্মের পর থেকেই কোনো প্রাণীর মধ্যে থাকে, তাকে কী বলে? ক) অর্জিত প্রতিবর্ত খ) সহজাত বা জন্মগত প্রতিবর্ত গ) অভ্যাসগত প্রতিবর্ত ঘ) শর্তাধীন প্রতিবর্ত উত্তর: খ) সহজাত বা জন্মগত প্রতিবর্ত
-৭৯. খাবার দেখলে কুকুরের বা মানুষের লালা নিঃসরণ হওয়া—এটি কোন ধরনের প্রতিবর্ত ক্রিয়া? ক) অর্জিত প্রতিবর্ত খ) সহজাত বা জন্মগত প্রতিবর্ত গ) অভ্যাসগত প্রতিবর্ত ঘ) রাসায়নিক প্রতিবর্ত উত্তর: খ) সহজাত বা জন্মগত প্রতিবর্ত
-৮০. বারবার অনুশীলনের মাধ্যমে যে প্রতিবর্ত ক্রিয়া তৈরি হয়, তাকে কী বলে? ক) অর্জিত বা অভ্যাসগত প্রতিবর্ত খ) জন্মগত প্রতিবর্ত গ) সহজাত প্রতিবর্ত ঘ) স্বতঃস্ফূর্ত প্রতিবর্ত উত্তর: ক) অর্জিত বা অভ্যাসগত প্রতিবর্ত
-৮১. ঘণ্টাধ্বনি শুনে কুকুরের লালা নিঃসরণ হওয়া—এটি কোন প্রতিবর্তের উদাহরণ? ক) জন্মগত প্রতিবর্ত খ) সহজাত প্রতিবর্ত গ) অর্জিত বা অভ্যাসগত প্রতিবর্ত ঘ) প্রাকৃতিক প্রতিবর্ত উত্তর: গ) অর্জিত বা অভ্যাসগত প্রতিবর্ত
-৮২. কুকুর, ঘণ্টা ও খাবার নিয়ে প্রতিবর্ত ক্রিয়ার বিখ্যাত পরীক্ষাটি কোন বিজ্ঞানী করেছিলেন? ক) আইভান প্যাভলভ খ) চার্লস ডারউইন গ) গ্রেগর জোহান মেন্ডেল ঘ) ল্যামার্ক উত্তর: ক) আইভান প্যাভলভ
-৮৩. প্যাভলভের পরীক্ষায় খাবার না দিয়ে কেবল ঘণ্টা বাজালেও কুকুরের লালা নিঃসরণ হওয়া প্রমাণ করে— ক) এটি একটি সহজাত প্রতিবর্ত খ) এটি একটি অর্জিত প্রতিবর্ত গ) কুকুরটির শ্রবণশক্তি বেশি ঘ) কুকুরটি ক্ষুধার্ত ছিল আধুনিক উত্তর: খ) এটি একটি অর্জিত প্রতিবর্ত
-৮৪. যে নির্দিষ্ট পথে প্রতিবর্ত ক্রিয়ার স্নায়ুস্পন্দন আবর্তিত বা যাতায়াত করে, তাকে কী বলে? ক) প্রতিবর্ত পথ বা রিফ্লেক্স আর্ক খ) স্নায়বিক পথ গ) সাইন্যাপটিক ক্লেফ্ট ঘ) গ্যাংলিয়ন উত্তর: ক) প্রতিবর্ত পথ বা রিফ্লেক্স আর্ক
-৮৫. একটি প্রতিবর্ত পথের (Reflex arc) প্রধান উপাদান কয়টি? ক) ৩টি খ) ৪টি গ) ৫টি ঘ) ৬টি উত্তর: গ) ৫টি
-৮৬. প্রতিবর্ত পথের প্রথম উপাদান কোনটি, যার সাহায্যে পরিবেশ থেকে উদ্দীপনা গৃহীত হয়? ক) স্নায়ুকেন্দ্র খ) গ্রাহক বা রিসেপ্টর গ) আজ্ঞাবহ নিউরোন ঘ) কারক উত্তর: খ) গ্রাহক বা রিসেপ্টর
-৮৭. গ্রাহক থেকে স্নায়ুস্পন্দন কোন নিউরোনের মাধ্যমে স্নায়ুকেন্দ্রে পরিবাহিত হয়? ক) আজ্ঞাবহ নিউরোন খ) মোটর নিউরোন গ) সংজ্ঞাবহ বা সেনসরি নিউরোন ঘ) সহযোগী নিউরোন উত্তর: গ) সংজ্ঞাবহ বা সেনসরি নিউরোন
-৮৮. প্রতিবর্ত ক্রিয়ায় স্নায়ুকেন্দ্র (Nerve centre) কোথায় অবস্থিত? ক) গুরুমস্তিষ্কে খ) থ্যালামাসে গ) সুষুম্নাকাণ্ডের ধূসর পদার্থে ঘ) লঘুমস্তিষ্কে উত্তর: গ) সুষুম্নাকাণ্ডের ধূসর পদার্থে
-৮৯. স্নায়ুকেন্দ্রে কোন ঘটনাটি ঘটে? ক) উদ্দীপনা গ্রহণ করা হয় খ) সাড়া প্রদান করা হয় গ) সংজ্ঞাবহ উদ্দীপনা আজ্ঞাবহ উদ্দীপনায় রূপান্তরিত হয় ঘ) হরমোন তৈরি হয় উত্তর: গ) সংজ্ঞাবহ উদ্দীপনা আজ্ঞাবহ উদ্দীপনায় রূপান্তরিত হয়
-৯০. স্নায়ুকেন্দ্র থেকে নির্দেশ বা আজ্ঞাবহ উদ্দীপনাকে কে কারকে বহন করে নিয়ে যায়? ক) সংজ্ঞাবহ নিউরোন খ) রিসেপ্টর গ) আজ্ঞাবহ বা মোটর নিউরোন ঘ) সহযোগী নিউরোন উত্তর: গ) আজ্ঞাবহ বা মোটর নিউরোন
-৯১. প্রতিবর্ত পথের শেষ উপাদান কোনটি, যা উদ্দীপনায় সাড়া দেয়? ক) স্নায়ুকেন্দ্র খ) গ্রাহক গ) কারক বা ইফেক্টর ঘ) সেনসরি নিউরোন উত্তর: গ) কারক বা ইফেক্টর
-৯২. কারক বা ইফেক্টর (Effector) হিসেবে দেহস্থ কোন অঙ্গ কাজ করে? ক) চোখ ও কান খ) পেশি বা গ্রন্থি গ) ত্বক ঘ) মস্তিষ্ক উত্তর: খ) পেশি বা গ্রন্থি
-৯৩. প্রতিবর্ত চাপের বা পথের স্নায়ুস্পন্দন পরিবহণের সঠিক পর্যায়ক্রমটি কী? ক) গ্রাহক → স্নায়ুকেন্দ্র → সংজ্ঞাবহ নিউরোন → আজ্ঞাবহ নিউরোন → কারক খ) কারক → আজ্ঞাবহ নিউরোন → স্নায়ুকেন্দ্র → সংজ্ঞাবহ নিউরোন → গ্রাহক গ) গ্রাহক → সংজ্ঞাবহ নিউরোন → স্নায়ুকেন্দ্র → আজ্ঞাবহ নিউরোন → কারক ঘ) সংজ্ঞাবহ নিউরোন → গ্রাহক → আজ্ঞাবহ নিউরোন → স্নায়ুকেন্দ্র → কারক উত্তর: গ) গ্রাহক → সংজ্ঞাবহ নিউরোন → স্নায়ুকেন্দ্র → আজ্ঞাবহ নিউরোন → কারক
-৯৪. প্রাত্যহিক জীবনে প্রতিবর্ত ক্রিয়ার প্রধান গুরুত্ব কী? ক) দেহের বৃদ্ধি ঘটানো খ) হঠাৎ বিপদ থেকে দেহকে রক্ষা করা গ) খাদ্যের পরিপাক করা ঘ) বংশবিস্তার করা উত্তর: খ) হঠাৎ বিপদ থেকে দেহকে রক্ষা করা
-৯৫. খাবার গেলার সময় হঠাৎ খাদ্যের টুকরো শ্বাসনালিতে ঢুকে পড়লে আমাদের কী হয়? ক) হাঁচি হয় খ) চোখ দিয়ে জল পড়ে গ) কাশি হতে থাকে ঘ) ঘুম পায় উত্তর: গ) কাশি হতে থাকে
-৯৬. খাদ্যের টুকরো শ্বাসনালিতে ঢুকলে সঙ্গে সঙ্গে কাশি হওয়া কোন ধরনের ক্রিয়া? ক) ঐচ্ছিক ক্রিয়া খ) চলন গ) প্রতিবর্ত ক্রিয়া ঘ) উপযোজন উত্তর: গ) প্রতিবর্ত ক্রিয়া
-৯৭. চোখের সামনে হঠাৎ করে ধুলোবালি বা পোকামাকড় পড়ার উপক্রম হলে চোখের পলক পড়ে যাওয়া কীসের উদাহরণ?ক) গমনের খ) অর্জিত প্রতিবর্তের গ) সহজাত প্রতিবর্ত ক্রিয়ার ঘ) উপযোজনের উত্তর: গ) সহজাত প্রতিবর্ত ক্রিয়ার
-৯৮. চোখের পলক পড়ার ফলে চোখ কীভাবে সুরক্ষিত হয়? ক) চোখের দৃষ্টিশক্তি বেড়ে যায় খ) চোখে ধুলো বা পোকামাকড় ঢুকতে পারে না গ) চোখের লেন্স বড় হয় ঘ) চোখের পেশি শক্তিশালী হয় উত্তর: খ) চোখে ধুলো বা পোকামাকড় ঢুকতে পারে না
-৯৯. নাকের মধ্যে হঠাৎ কোনো বিজাতীয় বস্তু (যেমন- ধূলিকণা) ঢুকে পড়লে আমাদের কী হয়? ক) বমি হয় খ) কাশি হয় গ) হাঁচি হয় ঘ) জ্বর আসে উত্তর: গ) হাঁচি হয়
-১০০. হাঁচি হওয়ার মাধ্যমে নাক কীভাবে সুরক্ষিত হয়? ক) নাকের মধ্যে বিজাতীয় বস্তু আটকে থাকে খ) বিজাতীয় বস্তু শরীর থেকে বাইরে বেরিয়ে যায় গ) নাকের ছিদ্র বড় হয় ঘ) ঘ্রাণশক্তি বৃদ্ধি পায় উত্তর: খ) বিজাতীয় বস্তু শরীর থেকে বাইরে বেরিয়ে যায়
-১০১. প্রতিবর্ত চাপের চিত্রে (চিত্র ১.৩৬) সুষুম্নাকাণ্ডের ভেতরের 'H' আকৃতির অংশটি কী দিয়ে গঠিত? ক) শ্বেত বস্তু খ) ধূসর বস্তু গ) রক্ত ঘ) মেনিনজেস উত্তর: খ) ধূসর বস্তু
-১০২. সংজ্ঞাবহ নিউরোন ও আজ্ঞাবহ নিউরোনের মাঝে সুষুম্নাকাণ্ডের ধূসর পদার্থে কোন নিউরোন থাকে? (চিত্র ১.৩৬ অনুযায়ী) ক) সংজ্ঞাবহ নিউরোন খ) সহযোগী নিউরোন গ) মোটর নিউরোন ঘ) রিসেপ্টর নিউরোন উত্তর: খ) সহযোগী নিউরোন
-১০৩. জন্মের পর শিশুর স্তন্যপান করা কোন ধরনের প্রতিবর্ত ক্রিয়া? ক) অর্জিত খ) সহজাত গ) শর্তাধীন ঘ) অভ্যাসগত উত্তর: খ) সহজাত
-১০৪. গরম বস্তুতে হাত লাগলে সঙ্গে সঙ্গে হাত সরিয়ে নেওয়া কোন প্রক্রিয়ার উদাহরণ? ক) হরমোনের প্রভাব খ) প্রতিবর্ত ক্রিয়া গ) পেশির স্বতঃস্ফূর্ত প্রসারণ ঘ) ঐচ্ছিক ক্রিয়া উত্তর: খ) প্রতিবর্ত ক্রিয়া
-১০৫. সাইকেল চালানো শেখা বা হাঁটা শেখা কোন প্রতিবর্তের উদাহরণ? ক) সহজাত প্রতিবর্ত খ) জন্মগত প্রতিবর্ত গ) অর্জিত বা অভ্যাসগত প্রতিবর্ত ঘ) প্রাকৃতিক প্রতিবর্ত উত্তর: গ) অর্জিত বা অভ্যাসগত প্রতিবর্ত
-১০৬. প্যাভলভের পরীক্ষাটি কোন প্রাণীর ওপর করা হয়েছিল? ক) বিড়াল খ) কুকুর গ) ইঁদুর ঘ) গিনিপিগ উত্তর: খ) কুকুর
-১০৭. প্যাভলভের পরীক্ষায় ঘণ্টা বাজানোর পর খাবার না দিলেও কুকুরের লালা নিঃসরণ হওয়ার কারণ কী? ক) কুকুরের সহজাত প্রবৃত্তি খ) কুকুরের অর্জিত বা অভ্যাসগত প্রতিবর্ত তৈরি হওয়া গ) কুকুরটি খুব ক্ষুধার্ত ছিল বলে ঘ) ঘণ্টার শব্দ কুকুরের খুব প্রিয় ছিল উত্তর: খ) কুকুরের অর্জিত বা অভ্যাসগত প্রতিবর্ত তৈরি হওয়া
-১০৮. প্রতিবর্ত পথে সংজ্ঞাবহ নিউরোন উদ্দীপনাকে কোথায় নিয়ে যায়? ক) কারকে খ) পেশিতে গ) স্নায়ুকেন্দ্রে (সুষুম্নাকাণ্ডে) ঘ) রিসেপ্টরে উত্তর: গ) স্নায়ুকেন্দ্রে (সুষুম্নাকাণ্ডে)
-১০৯. প্রতিবর্ত পথে আজ্ঞাবহ নিউরোনের কাজ কী? ক) উদ্দীপনা গ্রহণ করা খ) স্নায়ুকেন্দ্র থেকে নির্দেশ কারকে বহন করা গ) হরমোন ক্ষরণ করা ঘ) সংজ্ঞাবহ নিউরোন তৈরি করা উত্তর: খ) স্নায়ুকেন্দ্র থেকে নির্দেশ কারকে বহন করা
-১১০. 'In born reflex' বলতে কোন প্রতিবর্তকে বোঝায়? ক) অর্জিত প্রতিবর্ত খ) সহজাত বা জন্মগত প্রতিবর্ত গ) অভ্যাসগত প্রতিবর্ত ঘ) শর্তাধীন প্রতিবর্ত উত্তর: খ) সহজাত বা জন্মগত প্রতিবর্ত
-১১১. 'Acquired reflex' বলতে কোন প্রতিবর্তকে বোঝায়? ক) সহজাত প্রতিবর্ত খ) জন্মগত প্রতিবর্ত গ) অর্জিত বা অভ্যাসগত প্রতিবর্ত ঘ) পেশির প্রতিবর্ত উত্তর: গ) অর্জিত বা অভ্যাসগত প্রতিবর্ত
-১১২. 'Reflex arc' কথাটির বাংলা অর্থ কী? ক) স্নায়ু স্পন্দন খ) প্রতিবর্ত পথ বা চাপ গ) স্নায়ুকেন্দ্র ঘ) সাইন্যাপস উত্তর: খ) প্রতিবর্ত পথ বা চাপ
-১১৩. প্রতিবর্ত ক্রিয়ায় কারক হিসেবে পেশির পাশাপাশি আর কোনটি কাজ করতে পারে? ক) অস্থি খ) ত্বক গ) গ্রন্থি ঘ) চোখ উত্তর: গ) গ্রন্থি
-১১৪. গ্রাহক বা রিসেপ্টর হিসেবে কাজ করতে পারে এমন একটি অঙ্গ হলো— ক) পেশি খ) গ্রন্থি গ) ত্বক ঘ) সুষুম্নাকাণ্ড উত্তর: গ) ত্বক
-১১৫. হাঁচি, কাশি ও চোখের পলক পড়া—এগুলি কীসের উদাহরণ? ক) প্রাত্যহিক জীবনে প্রতিবর্ত ক্রিয়ার খ) হরমোনের কাজের গ) গুরুমস্তিষ্কের কাজের ঘ) অর্জিত প্রতিবর্তের উত্তর: ক) প্রাত্যহিক জীবনে প্রতিবর্ত ক্রিয়ার
-১১৬. সুষুম্নাকাণ্ডের কোন অংশে সহযোগী নিউরোন অবস্থান করে? (চিত্র ১.৩৬) ক) শ্বেত বস্তুতে খ) ধূসর বস্তুতে গ) কেন্দ্রীয় নালিতে ঘ) সাইন্যাপসে উত্তর: খ) ধূসর বস্তুতে
-১১৭. প্রতিবর্ত ক্রিয়াকে দ্রুত ও স্বয়ংক্রিয় করার পেছনে প্রধান কারণ কী? ক) এটি মস্তিষ্কের বদলে সুষুম্নাকাণ্ড দ্বারা নিয়ন্ত্রিত হয় বলে খ) এটি হরমোন দ্বারা নিয়ন্ত্রিত হয় বলে গ) এটি গুরুমস্তিষ্ক দ্বারা নিয়ন্ত্রিত হয় বলে ঘ) এটি পেশি দ্বারা নিয়ন্ত্রিত হয় বলে উত্তর: ক) এটি মস্তিষ্কের বদলে সুষুম্নাকাণ্ড দ্বারা নিয়ন্ত্রিত হয় বলে
-১১৮. অর্জিত প্রতিবর্ত অর্জনের জন্য কোনটির সবচেয়ে বেশি প্রয়োজন? ক) হরমোন খ) জন্মগত স্বভাব গ) বারবার অনুশীলন বা অভ্যাস ঘ) পেশির শক্তি উত্তর: গ) বারবার অনুশীলন বা অভ্যাস
-১১৯. প্যাভলভের পরীক্ষার শুরুতে খাবার দেখে কুকুরের লালা নিঃসরণ হওয়াটি কী ধরনের প্রতিবর্ত ছিল?ক) অর্জিত খ) সহজাত গ) শর্তাধীন ঘ) কৃত্রিম উত্তর: খ) সহজাত
-১২০. মানুষের হাঁটাচলা ও ভারসাম্য রক্ষা করার প্রতিবর্ত কোন মস্তিষ্ক দ্বারা নিয়ন্ত্রিত হয়? (পূর্ব পাঠের লঘুমস্তিষ্কের সূত্র অনুযায়ী) ক) গুরুমস্তিষ্ক খ) লঘুমস্তিষ্ক (প্রত্যাবর্তী স্নায়ুকেন্দ্র হিসেবে) গ) থ্যালামাস ঘ) হাইপোথ্যালামাস উত্তর: খ) লঘুমস্তিষ্ক (প্রত্যাবর্তী স্নায়ুকেন্দ্র হিসেবে)
-১২১. কোন প্রতিবর্তটি প্রাণীদেহের আত্মরক্ষায় সবচেয়ে বেশি সাহায্য করে? ক) অর্জিত প্রতিবর্ত খ) সহজাত প্রতিবর্ত (যেমন- চোখ বোজা, হাত সরানো) গ) শর্তাধীন প্রতিবর্ত ঘ) চলন উত্তর: খ) সহজাত প্রতিবর্ত (যেমন- চোখ বোজা, হাত সরানো)
-১২২. প্রতিবর্ত পথে সাইন্যাপস বা স্নায়ুসন্নিধি কোথায় অবস্থান করে? (চিত্র ১.৩৬) ক) গ্রাহক ও পেশির মাঝে খ) সংজ্ঞাবহ, সহযোগী ও আজ্ঞাবহ নিউরোনের সংযোগস্থলে (স্নায়ুকেন্দ্রে) গ) কেবল কারকের মধ্যে ঘ) কেন্দ্রীয় নালির বাইরে উত্তর: খ) সংজ্ঞাবহ, সহযোগী ও আজ্ঞাবহ নিউরোনের সংযোগস্থলে (স্নায়ুকেন্দ্রে)
-১২৩. দেহের কোনো অংশে পিন ফুটলে আমরা তৎক্ষণাৎ সরে যাই, এটি কার দ্বারা নিয়ন্ত্রিত হয়? ক) থ্যালামাস খ) সুষুম্নাকাণ্ড (প্রতিবর্ত ক্রিয়ার স্নায়ুকেন্দ্র হিসেবে) গ) হাইপোথ্যালামাস ঘ) পনস উত্তর: খ) সুষুম্নাকাণ্ড (প্রতিবর্ত ক্রিয়ার স্নায়ুকেন্দ্র হিসেবে)
-১২৪. প্রতিবর্ত ক্রিয়ার মাধ্যমে প্রাণীরা পরিবেশের সাথে কী রক্ষা করে? ক) খাদ্যগ্রহণ খ) সামঞ্জস্য বা আত্মরক্ষা গ) সালোকসংশ্লেষ ঘ) প্রজনন উত্তর: খ) সামঞ্জস্য বা আত্মরক্ষা
-১২৫. যে প্রতিবর্ত ক্রিয়ার জন্য কোনো পূর্ব অভিজ্ঞতার প্রয়োজন হয় না, তাকে কী বলে? ক) অর্জিত প্রতিবর্ত খ) অভ্যাসগত প্রতিবর্ত গ) সহজাত প্রতিবর্ত ঘ) শর্তাধীন প্রতিবর্ত উত্তর: গ) সহজাত প্রতিবর্ত
-_T7_
-১. আমাদের ৫টি জ্ঞানেন্দ্রিয়ের মধ্যে দর্শনেন্দ্রিয় (Organ of vision) কোনটি? ক) নাসিকা খ) কর্ণ গ) ত্বক ঘ) চোখ উত্তর: ঘ) চোখ
-২. মানুষের চোখ বাইরের জগৎ থেকে কী গ্রহণ করে স্নায়বিক কেন্দ্রে পাঠায়? ক) শব্দ খ) ঘ্রাণ গ) দৃশ্য বা আলোক উদ্দীপনা ঘ) স্বাদ উত্তর: গ) দৃশ্য বা আলোক উদ্দীপনা
-৩. অক্ষিগোলকের বহিরাবরকের পশ্চাদভাগের ৫/৬ অংশ জুড়ে থাকা স্তরটির নাম কী? ক) স্ক্লেরা বা শ্বেতমণ্ডল খ) কর্নিয়া গ) রেটিনা ঘ) কোরয়েড উত্তর: ক) স্ক্লেরা বা শ্বেতমণ্ডল
-৪. স্ক্লেরা বা শ্বেতমণ্ডল-এর প্রকৃতি কেমন হয়? ক) সাদা ও স্বচ্ছ খ) সাদা ও অস্বচ্ছ গ) কালো ও অস্বচ্ছ ঘ) রঙিন ও স্বচ্ছ উত্তর: খ) সাদা ও অস্বচ্ছ
-৫. চোখের কোরয়েড স্তরকে রক্ষা করা কার প্রধান কাজ? ক) রেটিনার খ) কর্নিয়ার গ) স্ক্লেরার ঘ) লেন্সের উত্তর: গ) স্ক্লেরার
-৬. অক্ষিগোলকের বহিরাবরকের সামনের দিকের ১/৬ অংশকে কী বলে? ক) স্ক্লেরা খ) আইরিশ গ) তারারন্ধ্র ঘ) কর্নিয়া বা আচ্ছাদপটল উত্তর: ঘ) কর্নিয়া বা আচ্ছাদপটল
-৭. কর্নিয়ার প্রকৃতি কেমন? ক) সাদা খ) অস্বচ্ছ গ) স্বচ্ছ ঘ) কালো উত্তর: গ) স্বচ্ছ
-৮. চোখের প্রধান প্রতিসারক মাধ্যম (Refractive medium) হিসেবে কাজ করে কোনটি? ক) স্ক্লেরা খ) কোরয়েড গ) রেটিনা ঘ) কর্নিয়া উত্তর: ঘ) কর্নিয়া
-৯. চোখের মধ্য আবরকের পশ্চাদভাগের ৫/৬ অংশকে কী বলে? ক) কোরয়েড বা কৃষ্ণমণ্ডল খ) আইরিশ গ) লেন্স ঘ) পিউপিল উত্তর: ক) কোরয়েড বা কৃষ্ণমণ্ডল
-১০. কোরয়েড বা কৃষ্ণমণ্ডলের রং কালো হয় কেন? ক) রক্ত থাকায় খ) মেলানিন রঞ্জক থাকায় গ) রড কোশ থাকায় ঘ) রোডপসিন থাকায় উত্তর: খ) মেলানিন রঞ্জক থাকায়
-১১. চোখের ভেতর বিচ্ছুরিত আলোকের প্রতিফলন রোধ করা কার কাজ? ক) কর্নিয়ার খ) রেটিনার গ) কোরয়েড বা কৃষ্ণমণ্ডলের ঘ) কনজাংটিভার উত্তর: গ) কোরয়েড বা কৃষ্ণমণ্ডলের
-১২. কর্নিয়ার পিছনে অবস্থিত বৃত্তাকার কালো পেশিময় পর্দাকে কী বলে? ক) রেটিনা খ) আইরিশ বা কনীনিকা গ) স্ক্লেরা ঘ) লেন্স উত্তর: খ) আইরিশ বা কনীনিকা
-১৩. আইরিশের কেন্দ্রে অবস্থিত গোলাকার ছিদ্রটিকে কী বলে? ক) অন্ধবিন্দু খ) পীতবিন্দু গ) তারারন্ধ্র বা পিউপিল ঘ) অপটিক স্নায় উত্তর: গ) তারারন্ধ্র বা পিউপিল
-১৪. মানুষের তারারন্ধ্র বা পিউপিলের ব্যাস সাধারণত কত হয়? ক) ১-২ মিলিমিটার খ) ১-৮ মিলিমিটার গ) ৫-১০ মিলিমিটার ঘ) ১০-১৫ মিলিমিটার উত্তর: খ) ১-৮ মিলিমিটার
-১৫. তারারন্ধ্রকে ছোটো ও বড়ো করে চোখের ভেতর আলো প্রবেশ নিয়ন্ত্রণ করে কে? ক) কর্নিয়া খ) লেন্স গ) রেটিনা ঘ) আইরিশ উত্তর: ঘ) আইরিশ
-১৬. অক্ষিগোলকের একেবারে ভেতরের স্তরটির নাম কী? ক) রেটিনা বা অক্ষিপট খ) কোরয়েড গ) স্ক্লেরা ঘ) আইরিশ উত্তর: ক) রেটিনা বা অক্ষিপট
-১৭. বস্তুর সুস্পষ্ট প্রতিবিম্ব চোখের কোন অংশে গঠিত হয়? ক) কর্নিয়ায় খ) লেন্সে গ) রেটিনায় ঘ) কোরয়েডে উত্তর: গ) রেটিনায়
-১৮. রেটিনায় প্রধানত কয় প্রকার আলোকগ্রাহী স্নায়ুকোশ থাকে? ক) ১ প্রকার খ) ২ প্রকার গ) ৩ প্রকার ঘ) ৪ প্রকার উত্তর: খ) ২ প্রকার
-১৯. রেটিনায় অবস্থিত দণ্ডাকৃতি আলোকগ্রাহী কোশকে কী বলে? ক) রড কোশ (Rod cells) খ) কোন কোশ (Cone cells) গ) গ্যাংলিয়ন কোশ ঘ) সোয়ান কোশ উত্তর: ক) রড কোশ (Rod cells)
-২০. রেটিনায় অবস্থিত শঙ্কু আকৃতির আলোকগ্রাহী কোশকে কী বলে? ক) রড কোশ খ) কোন কোশ গ) ম্যাকুলা ঘ) পিউপিল উত্তর: খ) কোন কোশ
-২১. মৃদু আলো শোষণে সক্ষম কোন কোশ? ক) কোন কোশ খ) রড কোশ গ) বেসাল কোশ ঘ) সিলিয়ারি কোশ উত্তর: খ) রড কোশ
-২২. অন্ধকারে দেখতে সাহায্য করে কোনটি? ক) রড কোশ খ) কোন কোশ গ) আইরিশ ঘ) লেন্স উত্তর: ক) রড কোশ
-২৩. উজ্জ্বল আলো এবং বর্ণ বা রং শোষণে সক্ষম কোন কোশ? ক) রড কোশ খ) কোন কোশ গ) স্ক্লেরা ঘ) কর্নিয়া উত্তর: খ) কোন কোশ
-২৪. মানুষের রেটিনায় রড কোশের সংখ্যা আনুমানিক কত? ক) ৫-৬ কোটি খ) ১১-১২.৫ কোটি গ) ২০-২৫ কোটি ঘ) ৬৩-৬৮ লক্ষ উত্তর: খ) ১১-১২.৫ কোটি
-২৫. মানুষের রেটিনায় কোন কোশের সংখ্যা আনুমানিক কত? ক) ১১-১২.৫ কোটি খ) ১-২ কোটি গ) ৬৩-৬৮ লক্ষ ঘ) ১০-১৫ লক্ষ উত্তর: গ) ৬৩-৬৮ লক্ষ
-২৬. নিশাচর প্রাণীদের (যেমন—পেঁচা) চোখে কোন কোশের সংখ্যা বেশি থাকে? ক) কোন কোশ খ) রড কোশ গ) উভয় সমান ঘ) কোনোটিই নয় উত্তর: খ) রড কোশ
-২৭. রড কোশে উপস্থিত রঞ্জক পদার্থটির নাম কী? ক) সায়ানোপসিন খ) আয়োডোপসিন গ) রোডপসিন ঘ) মেলানিন উত্তর: গ) রোডপসিন
-২৮. কোন কোশে উপস্থিত রঞ্জক পদার্থগুলির নাম কী? ক) রোডপসিন ও মেলানিন খ) সায়ানোপসিন এবং আয়োডোপসিন গ) লাইসোজাইম ও পেপসিন ঘ) হিমোগ্লোবিন উত্তর: খ) সায়ানোপসিন এবং আয়োডোপসিন
-২৯. রেটিনার যে অংশে অপটিক স্নায়ু মিলিত হয়েছে, তাকে কী বলে? ক) পীতবিন্দু খ) অন্ধবিন্দু গ) তারারন্ধ্র ঘ) কনজাংটিভা উত্তর: খ) অন্ধবিন্দু
-৩০. অন্ধবিন্দুতে বস্তুর প্রতিবিম্ব সৃষ্টি হয় না কেন? ক) এটি অস্বচ্ছ বলে খ) এখানে কোনো আলোকসংবেদী কোশ থাকে না বলে গ) এখানে কেবল রড কোশ থাকে বলে ঘ) এটি কর্নিয়ার সামনে থাকে বলে উত্তর: খ) এখানে কোনো আলোকসংবেদী কোশ থাকে না বলে
-৩১. রেটিনার যে অংশে সবচেয়ে ভালো ও স্পষ্ট প্রতিবিম্ব সৃষ্টি হয়, তাকে কী বলে? ক) পীতবিন্দু (Yellow spot) খ) অন্ধবিন্দু গ) তারারন্ধ্র ঘ) আইরিশ উত্তর: ক) পীতবিন্দু (Yellow spot)
-৩২. পীতবিন্দুতে কোন কোশের সংখ্যা সবচেয়ে বেশি থাকে? ক) রড কোশ খ) কোন কোশ গ) গবলেট কোশ ঘ) ফ্যাট কোশ উত্তর: খ) কোন কোশ
-৩৩. চোখের লেন্স (Lens) বা মণির আকৃতি কেমন? ক) অবতল খ) স্ফটিক-স্বচ্ছ এবং উভউত্তল গ) সমতল ঘ) গোলাকার ও অস্বচ্ছ উত্তর: খ) স্ফটিক-স্বচ্ছ এবং উভউত্তল
-৩৪. চোখের লেন্স কোথায় অবস্থান করে? ক) কর্নিয়ার সামনে খ) রেটিনার পিছনে গ) আইরিশের পিছনে ঘ) স্ক্লেরার বাইরে উত্তর: গ) আইরিশের পিছনে
-৩৫. চোখের লেন্সকে অক্ষিকোটরে ঝুলিয়ে রাখে কে? ক) অপটিক স্নায়ু খ) আইরিশ গ) কোরয়েড ঘ) সাসপেনসরি লিগামেন্ট উত্তর: ঘ) সাসপেনসরি লিগামেন্ট
-৩৬. আলোর প্রতিসরণ ঘটিয়ে রেটিনার ওপর বস্তুর ফোকাস সৃষ্টি করে কে? ক) আইরিশ খ) লেন্স বা মণি গ) স্ক্লেরা ঘ) পিউপিল উত্তর: খ) লেন্স বা মণি
-৩৭. লেন্সের সামনের প্রকোষ্ঠে অবস্থিত স্বচ্ছ জলীয় তরলকে কী বলে? ক) ভিট্রিয়াস হিউমর খ) সাইনোভিয়াল তরল গ) সেরিব্রোস্পাইনাল ফ্লুইড ঘ) অ্যাকুয়াস হিউমর (Aqueous humour) উত্তর: ঘ) অ্যাকুয়াস হিউমর (Aqueous humour)
-৩৮. অ্যাকুয়াস হিউমরের কাজ কী? ক) লেন্সকে পরিষ্কার করা খ) চোখের অভ্যন্তরীণ চাপ নিয়ন্ত্রণ করা গ) চোখের পাতা ভেজানো ঘ) মেলানিন তৈরি করা উত্তর: খ) চোখের অভ্যন্তরীণ চাপ নিয়ন্ত্রণ করা
-৩৯. লেন্সের পশ্চাৎ প্রকোষ্ঠে অবস্থিত স্বচ্ছ, জেলির মতো ঘন তরলকে কী বলে? ক) অ্যাকুয়াস হিউমর খ) রক্ত গ) ভিট্রিয়াস হিউমর (Vitreous humour) ঘ) অশ্রু উত্তর: গ) ভিট্রিয়াস হিউমর (Vitreous humour)
-৪০. ভিট্রিয়াস হিউমরের কাজ কী? ক) প্রতিসারক মাধ্যম হিসেবে কাজ করা ও চাপ নিয়ন্ত্রণ করা খ) লেন্সকে সংকুচিত করা গ) রেটিনাকে রক্ত সরবরাহ করা ঘ) কর্নিয়াকে রক্ষা করা উত্তর: ক) প্রতিসারক মাধ্যম হিসেবে কাজ করা ও চাপ নিয়ন্ত্রণ করা
-৪১. কর্নিয়ার ওপর অবস্থিত স্বচ্ছ স্তরটির নাম কী? ক) স্ক্লেরা খ) রেটিনা গ) নেত্রবর্ত্মকলা বা কনজাংটিভা (Conjunctiva)ঘ) কোরয়েড উত্তর: গ) নেত্রবর্ত্মকলা বা কনজাংটিভা (Conjunctiva)
-৪২. কর্নিয়াকে ঘর্ষণজনিত আঘাত থেকে রক্ষা করে কে? ক) অ্যাকুয়াস হিউমর খ) ভিট্রিয়াস হিউমর গ) লেন্স ঘ) কনজাংটিভা উত্তর: ঘ) কনজাংটিভা
-৪৩. চোখের অশ্রুকে চারদিকে ছড়িয়ে দিয়ে চোখকে আর্দ্র রাখে কে? ক) কর্নিয়া খ) অক্ষিপল্লব (Eye lids) বা চোখের পাতা গ) কনজাংটিভা ঘ) তারারন্ধ্র উত্তর: খ) অক্ষিপল্লব (Eye lids) বা চোখের পাতা
-৪৪. চোখের অশ্রু কোথা থেকে ক্ষরিত হয়? ক) আইরিশ থেকে খ) লেন্স থেকে গ) অশ্রু গ্রন্থি বা টিয়ার গ্ল্যান্ড (Tear glands) থেকে ঘ) রেটিনা থেকে উত্তর: গ) অশ্রু গ্রন্থি বা টিয়ার গ্ল্যান্ড (Tear glands) থেকে
-৪৫. অশ্রুতে উপস্থিত কোন উৎসেচক চোখের ব্যাকটেরিয়া ধ্বংস করে? ক) পেপসিন খ) রেনিন গ) লাইসোজাইম ঘ) ট্রিপসিন উত্তর: গ) লাইসোজাইম
-৪৬. মাথার সামনের দিকে দুটি চোখ থাকায় দুটি চোখ দিয়ে একই বস্তুকে দেখার পদ্ধতিকে কী বলে? ক) একনেত্র দৃষ্টি খ) দ্বিনেত্র দৃষ্টি (Binocular vision) গ) বহুনেত্র দৃষ্টি ঘ) অন্ধ দৃষ্টি উত্তর: খ) দ্বিনেত্র দৃষ্টি (Binocular vision)
-৪৭. মাথার দু-পাশে একটি করে চোখ থাকায় দুটি চোখ দিয়ে একই সময়ে দুটি আলাদা বস্তু দেখার পদ্ধতিকে কী বলে? ক) দ্বিনেত্র দৃষ্টি খ) একনেত্র দৃষ্টি গ) ত্রিনেত্র দৃষ্টি ঘ) নিকট দৃষ্টি উত্তর: খ) একনেত্র দৃষ্টি
-৪৮. বস্তুর সঠিক আকার, আয়তন, অবস্থান ও দূরত্ব নির্ভুলভাবে নির্ণয় করা যায় কোন দৃষ্টিতে? ক) একনেত্র দৃষ্টিতে খ) দ্বিনেত্র দৃষ্টিতে গ) উভয় দৃষ্টিতেই ঘ) কোনোটিতেই নয় উত্তর: খ) দ্বিনেত্র দৃষ্টিতে
-৪৯. নিচের কোন প্রাণীতে দ্বিনেত্র দৃষ্টি দেখা যায়? ক) ব্যাঙ, গোরু খ) ছাগল, ঘোড়া গ) মানুষ, বাঘ, পেঁচা ঘ) সাপ, মাছ উত্তর: গ) মানুষ, বাঘ, পেঁচা
-৫০. নিচের কোন প্রাণীতে একনেত্র দৃষ্টি দেখা যায়? ক) মানুষ খ) বানর গ) বাজপাখি ঘ) গোরু, ব্যাঙ, ছাগল উত্তর: ঘ) গোরু, ব্যাঙ, ছাগল
-৫১. চোখের স্থান পরিবর্তন না করে বিভিন্ন দূরত্বে অবস্থিত বস্তুকে স্পষ্টভাবে দেখার পদ্ধতিকে কী বলে? ক) প্রতিবর্ত ক্রিয়া খ) উপযোজন বা অ্যাকোমোডেশন (Accommodation) গ) চলন ঘ) গমন উত্তর: খ) উপযোজন বা অ্যাকোমোডেশন (Accommodation)
-৫২. চোখের উপযোজন প্রধানত কার সাহায্যে সম্পন্ন হয়? ক) স্ক্লেরা ও কর্নিয়া খ) আইরিশ ও পিউপিল গ) সিলিয়ারি পেশি ও লেন্স ঘ) কনজাংটিভা ও রেটিনা উত্তর: গ) সিলিয়ারি পেশি ও লেন্স
-৫৩. দূরের বস্তু দেখার ক্ষেত্রে সিলিয়ারি পেশির কী পরিবর্তন ঘটে? ক) সংকোচন ঘটে খ) শিথিলকরণ (Relaxation) ঘটে গ) কোনো পরিবর্তন হয় না ঘ) পেশি ছিঁড়ে যায় উত্তর: খ) শিথিলকরণ (Relaxation) ঘটে
-৫৪. দূরের বস্তু দেখার সময় চোখের লেন্সের আকৃতি কেমন হয়? ক) পুরু বা মোটা হয় খ) সরু বা পাতলা হয় গ) গোলাকার হয় ঘ) চ্যাপ্টা হয় উত্তর: খ) সরু বা পাতলা হয়
-৫৫. দূরের বস্তু দেখার সময় লেন্সের ফোকাস দৈর্ঘ্যের কী পরিবর্তন হয়? ক) হ্রাস পায় খ) বৃদ্ধি পায় গ) একই থাকে ঘ) শূন্য হয়ে যায় উত্তর: খ) বৃদ্ধি পায়
-৫৬. কাছের বস্তু দেখার ক্ষেত্রে সিলিয়ারি পেশির কী পরিবর্তন ঘটে? ক) শিথিলকরণ ঘটে খ) অবলুপ্তি ঘটে গ) সংকোচন (Contraction) ঘটে ঘ) প্রসারিত হয় উত্তর: গ) সংকোচন (Contraction) ঘটে
-৫৭. কাছের বস্তু দেখার সময় লেন্সের আকৃতির কী পরিবর্তন হয়? ক) লেন্স সরু হয় খ) লেন্সের বক্রতা বৃদ্ধি পায় অর্থাৎ লেন্স পুরু হয় গ) লেন্স পাতলা হয় ঘ) লেন্স লম্বাটে হয় উত্তর: খ) লেন্সের বক্রতা বৃদ্ধি পায় অর্থাৎ লেন্স পুরু হয়
-৫৮. কাছের বস্তু দেখার সময় লেন্সের ফোকাস দৈর্ঘ্য কী হয়? ক) বৃদ্ধি পায় খ) দ্বিগুণ হয় গ) হ্রাস পায় ঘ) একই থাকে উত্তর: গ) হ্রাস পায়
-৫৯. প্রাত্যহিক জীবনে উপযোজনের একটি গুরুত্বপূর্ণ উদাহরণ কোনটি? ক) ঘুমানোর সময় চোখ বন্ধ করা খ) রাস্তা পারাপারের সময় ট্রাফিক সিগন্যাল বা পথনির্দেশ দেখা গ) খাবার চিবানো ঘ) হাঁচি দেওয়া উত্তর: খ) রাস্তা পারাপারের সময় ট্রাফিক সিগন্যাল বা পথনির্দেশ দেখা
-৬০. মানুষের চোখের সাধারণ উপযোজনের ক্ষেত্রে 'far vision' (দূরের দৃষ্টি)-এর জন্য কত দূরত্বের বস্তুর কথা বলা হয়েছে? ক) ৫ সেন্টিমিটারের অধিক খ) ১৫ সেন্টিমিটারের অধিক গ) ২৫ সেন্টিমিটারের অধিক ঘ) ৩৫ সেন্টিমিটারের অধিক উত্তর: ঘ) ৩৫ সেন্টিমিটারের অধিক
-৬১. যে দৃষ্টিতে কাছের বস্তু স্পষ্টভাবে দেখা যায়, কিন্তু দূরের বস্তু দেখতে অসুবিধা হয়, তাকে কী বলে? ক) হাইপারমেট্রোপিয়া খ) প্রেসবায়োপিয়া গ) মায়োপিয়া (Myopia) বা নিকটবদ্ধ দৃষ্টি ঘ) ক্যাটারাক্ট উত্তর: গ) মায়োপিয়া (Myopia) বা নিকটবদ্ধ দৃষ্টি
-৬২. মায়োপিয়া ত্রুটিতে অক্ষিগোলকের ব্যাসের কী পরিবর্তন হয়? ক) স্বাভাবিকের তুলনায় ছোটো হয়ে যায় খ) স্বাভাবিকের তুলনায় বর্ধিত হয় বা বেড়ে যায় গ) কোনো পরিবর্তন হয় না ঘ) লেন্সের সাথে মিশে যায় উত্তর: খ) স্বাভাবিকের তুলনায় বর্ধিত হয় বা বেড়ে যায়
-৬৩. মায়োপিয়া ত্রুটিতে দূরের বস্তুর প্রতিবিম্ব রেটিনার কোথায় গঠিত হয়? ক) রেটিনার ওপর খ) রেটিনার পিছনে গ) রেটিনার সামনে ঘ) অন্ধবিন্দুতে উত্তর: গ) রেটিনার সামনে
-৬৪. মায়োপিয়া বা নিকটবদ্ধ দৃষ্টি সংশোধনের জন্য কোন লেন্সযুক্ত চশমা ব্যবহার করা হয়? ক) উত্তল লেন্স খ) অবতল লেন্স (Concave lens) গ) সমতল লেন্স ঘ) বাইফোকাল লেন্স উত্তর: খ) অবতল লেন্স (Concave lens)
-৬৫. অবতল লেন্সের গঠন কেমন হয়? ক) মধ্য অংশ মোটা, প্রান্তীয় অংশ পাতলা খ) মধ্য অংশ পাতলা, প্রান্তীয় অংশ মোটা গ) সর্বত্র সমান পুরু ঘ) সর্বত্র পাতলা উত্তর: খ) মধ্য অংশ পাতলা, প্রান্তীয় অংশ মোটা
-৬৬. যে দৃষ্টিতে দূরের বস্তু স্পষ্টভাবে দেখা যায়, কিন্তু কাছের বস্তু দেখতে অসুবিধা হয়, তাকে কী বলে? ক) মায়োপিয়া খ) প্রেসবায়োপিয়া গ) ক্যাটারাক্ট ঘ) হাইপারমেট্রোপিয়া (Hypermetropia)বা দূরবদ্ধ দৃষ্টি উত্তর: ঘ) হাইপারমেট্রোপিয়া (Hypermetropia) বা দূরবদ্ধ দৃষ্টি
-৬৭. হাইপারমেট্রোপিয়া ত্রুটিতে অক্ষিগোলকের ব্যাসের কী পরিবর্তন হয়? ক) স্বাভাবিকের তুলনায় ছোটো হয়ে যায় খ) স্বাভাবিকের তুলনায় বড়ো হয় গ) অপরিবর্তিত থাকে ঘ) চ্যাপ্টা হয়ে যায় উত্তর: ক) স্বাভাবিকের তুলনায় ছোটো হয়ে যায়
-৬৮. হাইপারমেট্রোপিয়া ত্রুটিতে কাছের বস্তুর প্রতিবিম্ব কোথায় গঠিত হয়? ক) রেটিনার ওপর খ) রেটিনার সামনে গ) রেটিনার পিছনে বা বাইরে ঘ) কর্নিয়ায় উত্তর: গ) রেটিনার পিছনে বা বাইরে
-৬৯. হাইপারমেট্রোপিয়া বা দূরবদ্ধ দৃষ্টি সংশোধনের জন্য কোন লেন্সযুক্ত চশমা ব্যবহার করা হয়? ক) অবতল লেন্স খ) সমতল লেন্স গ) উত্তল লেন্স (Convex lens) ঘ) রঙিন লেন্স উত্তর: গ) উত্তল লেন্স (Convex lens)
-৭০. উত্তল লেন্সের গঠন কেমন হয়? ক) মধ্য অংশ মোটা, প্রান্তীয় অংশ পাতলা খ) মধ্য অংশ পাতলা, প্রান্তীয় অংশ মোটা গ) দুই দিকেই সমতল ঘ) গোলাকার ছিদ্রযুক্ত উত্তর: ক) মধ্য অংশ মোটা, প্রান্তীয় অংশ পাতলা
-৭১. সাধারণত ৪০ বছরের বেশি বয়সি লোকেদের চোখের লেন্সের স্থিতিস্থাপকতা নষ্ট হয়ে কাছের বস্তু দেখতে অসুবিধা হওয়াকে কী বলে? ক) মায়োপিয়া খ) হাইপারমেট্রোপিয়া গ) প্রেসবায়োপিয়া (Presbyopia) ঘ) ক্যাটারাক্ট উত্তর: গ) প্রেসবায়োপিয়া (Presbyopia)
-৭২. প্রেসবায়োপিয়া ত্রুটির প্রধান কারণ কী? ক) অক্ষিগোলকের ব্যাস বেড়ে যাওয়া খ) লেন্সের স্থিতিস্থাপকতা (elasticity) নষ্ট হয়ে যাওয়া গ) রেটিনায় রড কোশ কমে যাওয়া ঘ) কর্নিয়ায় ঘা হওয়া উত্তর: খ) লেন্সের স্থিতিস্থাপকতা (elasticity) নষ্ট হয়ে যাওয়া
-৭৩. প্রেসবায়োপিয়া ত্রুটি সংশোধনের জন্য কোন ধরনের লেন্স ব্যবহার করা হয়? ক) কেবল অবতল লেন্স খ) উত্তল অথবা বাইফোকাল (Bifocal) লেন্স গ) সমতল লেন্স ঘ) সিলিন্ড্রিক্যাল লেন্স উত্তর: খ) উত্তল অথবা বাইফোকাল (Bifocal) লেন্স
-৭৪. বেশি বয়স্ক লোকেদের চোখের লেন্সে প্রোটিন জমার কারণে লেন্স অস্বচ্ছ হয়ে গিয়ে দৃষ্টিশক্তি ব্যাহত হওয়াকে কী বলে? ক) ক্যাটারাক্ট (Cataract) বা চোখে ছানি পড়া খ) মায়োপিয়া গ) হাইপারমেট্রোপিয়া ঘ) প্রেসবায়োপিয়া উত্তর: ক) ক্যাটারাক্ট (Cataract) বা চোখে ছানি পড়া
-৭৫. ক্যাটারাক্ট বা চোখে ছানি পড়ার স্থায়ী প্রতিকার কী? ক) ভিটামিন এ খাওয়া খ) অবতল লেন্স যুক্ত চশমা পরা গ) সার্জারি করে আক্রান্ত লেন্সটিকে সরিয়ে সেখানে একটি ক্ষুদ্র প্লাস্টিক লেন্স আটকে দেওয়া ঘ) চোখের ব্যায়াম করা উত্তর: গ) সার্জারি করে আক্রান্ত লেন্সটিকে সরিয়ে সেখানে একটি ক্ষুদ্র প্লাস্টিক লেন্স আটকে দেওয়া
-_T8_
-১. যে প্রক্রিয়ায় জীব উদ্দীপনার প্রভাবে বা স্বতঃস্ফূর্তভাবে অঙ্গপ্রত্যঙ্গ সঞ্চালনের দ্বারা সামগ্রিকভাবে স্থান পরিবর্তন করে, তাকে কী বলে? ক) চলন খ) বৃদ্ধি গ) গমন ঘ) উপযোজন উত্তর: গ) গমন
-২. গমনের প্রধান উদ্দেশ্য বা চালিকা শক্তির মধ্যে কোনটি পড়ে না? ক) খাদ্য অন্বেষণ খ) আশ্রয় বা বাসস্থান খোঁজা গ) আত্মরক্ষা ঘ) সালোকসংশ্লেষ করা উত্তর: ঘ) সালোকসংশ্লেষ করা
-৩. প্রাণীরা প্রধানত কীসের খোঁজে এক জায়গা থেকে অন্য জায়গায় গমন করে? ক) খাদ্যের সন্ধানে খ) সূর্যালোকের সন্ধানে গ) অক্সিজেনের সন্ধানে ঘ) কার্বন ডাইঅক্সাইডের সন্ধানে উত্তর: ক) খাদ্যের সন্ধানে
-৪. কোনো খাদক বা শিকারি প্রাণী দ্বারা আক্রান্ত হলে প্রাণীদের গমনের প্রধান উদ্দেশ্য কী হয়? ক) প্রজনন খ) আত্মরক্ষা গ) খাদ্য সংগ্রহ ঘ) বাসস্থান নির্মাণ উত্তর: খ) আত্মরক্ষা
-৫. একটি প্রাণীর অনেকগুলো শাবক জন্ম দিলে তারা বড়ো হওয়ার পর মূলত কেন বিভিন্ন স্থানে ছড়িয়ে পড়ে? ক) খেলা করার জন্য খ) ঘুমোনোর জন্য গ) খাদ্য ও আশ্রয়ের জন্য ঘ) শিকার করার জন্য উত্তর: গ) খাদ্য ও আশ্রয়ের জন্য
-৬. বংশবিস্তারের উদ্দেশ্যে উপযুক্ত সঙ্গী বা সঙ্গিনী খোঁজার জন্য প্রাণীদের কীসের প্রয়োজন হয়? ক) চলন খ) গমন গ) রেচন ঘ) শ্বসন উত্তর: খ) গমন
-৭. নতুন এবং অনুকূল পরিবেশের খোঁজে প্রাণীরা কী করে? ক) স্থানান্তরে গমন করে খ) নিষ্ক্রিয় হয়ে পড়ে গ) মারা যায় ঘ) ঘুমিয়ে থাকে উত্তর: ক) স্থানান্তরে গমন করে
-৮. গমনের মাধ্যমে প্রাণীদের মূলত কী পরিবর্তন ঘটে? ক) কেবল অঙ্গের সঞ্চালন খ) দেহের আকার বৃদ্ধি গ) সামগ্রিক স্থান পরিবর্তন ঘ) রঙের পরিবর্তন উত্তর: গ) সামগ্রিক স্থান পরিবর্তন
-৯. প্রাণীদের গমনের ফলে তারা কোন বিষয়টির থেকে রক্ষা পেতে পারে? ক) খাদক বা শিকারি প্রাণী খ) উপযুক্ত পরিবেশ গ) খাদ্য ঘ) জল উত্তর: ক) খাদক বা শিকারি প্রাণী
-১০. প্রাণীরা তাদের পছন্দমতো নতুন আশ্রয়ের সন্ধানে কী করে? ক) একই স্থানে স্থির থাকে খ) স্থানান্তরে গমন করে গ) গর্ত খুঁড়ে লুকিয়ে পড়ে ঘ) গাছের ডালে ঝুলে থাকে উত্তর: খ) স্থানান্তরে গমন করে
-১১. অ্যামিবার গমন অঙ্গের নাম কী? ক) সিলিয়া খ) ফ্ল্যাজেলা গ) ক্ষণপদ বা সিউডোপোডিয়া ঘ) পাখনা উত্তর: গ) ক্ষণপদ বা সিউডোপোডিয়া
-১২. অ্যামিবার গমন পদ্ধতিকে কী বলা হয়? ক) সিলিয়ারি গমন খ) ফ্ল্যাজেলারি গমন গ) অ্যামিবয়েড গমন ঘ) দ্বিপদ গমন উত্তর: গ) অ্যামিবয়েড গমন
-১৩. অ্যামিবা ক্ষণপদ তৈরি করার জন্য দেহের কোন অংশটিকে পরিধির দিকে প্রলম্বিত করে? ক) নিউক্লিয়াস খ) এক্টোপ্লাজম গ) এন্ডোপ্লাজম ঘ) মাইটোকনড্রিয়া উত্তর: খ) এক্টোপ্লাজম
-১৪. অ্যামিবা ক্ষণপদটিকে বর্ধিত করে তার আঠালো অগ্রভাগ দিয়ে কী করে? ক) খাবার খায় খ) কোনো শক্ত বস্তুর সঙ্গে আটকে যায় গ) জলের মধ্যে সাঁতার কাটে ঘ) সিলিয়া তৈরি করে উত্তর: খ) কোনো শক্ত বস্তুর সঙ্গে আটকে যায়
-১৫. গতির দিকে এগোতে অ্যামিবা ক্ষণপদের মধ্যে কী প্রবাহিত করে? ক) জল খ) রক্ত গ) এন্ডোপ্লাজম ঘ) উৎসেচক উত্তর: গ) এন্ডোপ্লাজম
-১৬. এন্ডোপ্লাজম প্রবাহিত করার পর অ্যামিবা তার পশ্চাৎ অংশকে কী করে? ক) গুটিয়ে নেয় খ) প্রসারিত করে গ) খসিয়ে দেয় ঘ) লম্বা করে উত্তর: ক) গুটিয়ে নেয়
-১৭. মানুষের কোন কোশে অ্যামিবয়েড চলন দেখা যায়? ক) লোহিত রক্তকণিকায় খ) শ্বেতকণিকায় গ) অনুচক্রিকায় ঘ) স্নায়ুকোশে উত্তর: খ) শ্বেতকণিকায়
-১৮. স্পঞ্জের কোন কোশে অ্যামিবয়েড গমন দেখা যায়? ক) অ্যামিবোসাইট কোশে খ) রড কোশে গ) কোন কোশে ঘ) পেশিকোশে উত্তর: ক) অ্যামিবোসাইট কোশে
-১৯. প্যারামিসিয়ামের গমন অঙ্গের নাম কী? ক) ফ্ল্যাজেলা খ) ক্ষণপদ গ) সিলিয়া ঘ) ডানা উত্তর: গ) সিলিয়া
-২০. প্যারামিসিয়ামের গমন পদ্ধতিকে কী বলা হয়? ক) অ্যামিবয়েড গমন খ) সিলিয়ারি গমন গ) ফ্ল্যাজেলারি গমন ঘ) দ্বিপদ গমন উত্তর: খ) সিলিয়ারি গমন
-২১. প্যারামিসিয়ামের বহিরাবরণে অসংখ্য সিলিয়া কীভাবে সজ্জিত থাকে? ক) অনুদৈর্ঘ্য সারিতে খ) এলোমেলোভাবে গ) বৃত্তাকারে ঘ) আড়াআড়িভাবে উত্তর: ক) অনুদৈর্ঘ্য সারিতে
-২২. দেহের আকৃতি সাঁতার কাটার উপযোগী হওয়ায় প্যারামিসিয়াম কোন দিকে যেতে পারে? ক) শুধু সামনের দিকে খ) শুধু পিছনের দিকে গ) সামনে এবং পিছনে উভয় দিকেই ঘ) কেবল উপর দিকে উত্তর: গ) সামনে এবং পিছনে উভয় দিকেই
-২৩. সিলিয়ার আন্দোলনের সাহায্যে প্যারামিসিয়াম কোথায় গমন করে? ক) ডাঙায় খ) জলের মধ্যে গ) বাতাসে ঘ) মাটির তলায় উত্তর: খ) জলের মধ্যে
-২৪. ইউগ্লিনার গমন অঙ্গের নাম কী? ক) সিলিয়া খ) ফ্ল্যাজেলা গ) ক্ষণপদ ঘ) পা উত্তর: খ) ফ্ল্যাজেলা
-২৫. ইউগ্লিনার গমন পদ্ধতিকে কী বলা হয়? ক) সিলিয়ারি গমন খ) ফ্ল্যাজেলারি গমন গ) অ্যামিবয়েড গমন ঘ) সচল গমন উত্তর: খ) ফ্ল্যাজেলারি গমন
-২৬. ইউগ্লিনা জলের মধ্যে স্থানান্তরে গমন করে ফ্ল্যাজেলার কীরূপ আন্দোলনের সাহায্যে? ক) ধীরগতির আন্দোলন খ) এলোমেলো আন্দোলন গ) ছন্দোবদ্ধ আন্দোলন ঘ) বৃত্তাকার আন্দোলন উত্তর: গ) ছন্দোবদ্ধ আন্দোলন
-২৭. ইউগ্লিনা কী ধরনের জীব? ক) বহুকোষী জীব খ) এককোষী জীব গ) উদ্ভিদ ঘ) ছত্রাক উত্তর: খ) এককোষী জীব
-২৮. প্যারামিসিয়াম, ইউগ্লিনা এবং অ্যামিবা—এদের গমনের সাধারণ মাধ্যম কোনটি? ক) বাতাস খ) জল বা তরল মাধ্যম গ) শক্ত মাটি ঘ) বরফ উত্তর: খ) জল বা তরল মাধ্যম
-২৯. জলে সাঁতার কাটার সুবিধার জন্য মাছের দেহের আকৃতি কেমন হয়? ক) গোলাকার খ) মাকু (streamlined) আকৃতির গ) চারকোনা ঘ) লম্বাটে সুতোর মতো উত্তর: খ) মাকু (streamlined) আকৃতির
-৩০. মাছের গমনে সাহায্যকারী প্রধান অঙ্গগুলি কী কী? ক) ডানা ও পালক খ) পা ও হাত গ) পাখনা ও মায়োটোম পেশি ঘ) সিলিয়া ও ফ্ল্যাজেলা উত্তর: গ) পাখনা ও মায়োটোম পেশি
-৩১. মাছের দেহে মোট কয়টি পাখনা থাকে? ক) ৫টি খ) ৬টি গ) ৭টি ঘ) ৮টি উত্তর: গ) ৭টি
-৩২. মাছের গমনে অংশগ্রহণকারী মায়োটোম পেশির আকৃতি কেমন? ক) ইংরেজি 'V' অক্ষরের মতো খ) ইংরেজি 'U' অক্ষরের মতো গ) ইংরেজি 'S' অক্ষরের মতো ঘ) ইংরেজি 'L' অক্ষরের মতো উত্তর: ক) ইংরেজি 'V' অক্ষরের মতো
-৩৩. মাছের মায়োটোম পেশি কোথায় বিস্তৃত থাকে? ক) পেটের নিচে খ) মেরুদণ্ডের দু-পাশে কানকো থেকে লেজের শেষ প্রান্ত পর্যন্ত গ) শুধুমাত্র লেজে ঘ) মাথার ওপর উত্তর: খ) মেরুদণ্ডের দু-পাশে কানকো থেকে লেজের শেষ প্রান্ত পর্যন্ত
-৩৪. মায়োটোম পেশির সংকোচন কেমন প্রকৃতির হয়? ক) স্থির খ) তরঙ্গের মতো (metachronal) গ) এলোমেলো ঘ) বৃত্তাকার উত্তর: খ) তরঙ্গের মতো (metachronal)
-৩৫. মায়োটোম পেশির সংকোচনের ফলে মেরুদণ্ড কীভাবে আন্দোলিত হয়? ক) উপর-নীচে খ) দু-পাশে পর্যায়ক্রমে গ) সামনে-পিছনে ঘ) স্থির থাকে উত্তর: খ) দু-পাশে পর্যায়ক্রমে
-৩৬. মাছের বক্ষদেশে অবস্থিত পাখনার নাম কী? ক) শ্রোণি পাখনা খ) বক্ষ পাখনা গ) পৃষ্ঠ পাখনা ঘ) পুচ্ছ পাখনা উত্তর: খ) বক্ষ পাখনা
-৩৭. বক্ষ পাখনার সংখ্যা কয়টি? ক) একটি খ) একজোড়া (দুটি) গ) তিনটি ঘ) চারটি উত্তর: খ) একজোড়া (দুটি)
-৩৮. গমনের সময় মাছকে জলে ওঠা-নামা করতে সাহায্য করে কোন পাখনা? ক) বক্ষ ও শ্রোণি পাখনা খ) পৃষ্ঠ পাখনা গ) পুচ্ছ পাখনা ঘ) পায়ু পাখনা উত্তর: ক) বক্ষ ও শ্রোণি পাখনা
-৩৯. মাছকে জলে স্থিরভাবে ভেসে থাকতে সাহায্য করে কোন পাখনা? ক) পৃষ্ঠ পাখনা খ) পুচ্ছ পাখনা গ) পায়ু পাখনা ঘ) বক্ষ পাখনা উত্তর: ঘ) বক্ষ পাখনা
-৪০. শ্রোণি পাখনার সংখ্যা কয়টি? ক) একটি খ) একজোড়া গ) তিনটি ঘ) চারটি উত্তর: খ) একজোড়া
-৪১. পৃষ্ঠ পাখনার সংখ্যা কয়টি? ক) একটি খ) দুটি গ) তিনটি ঘ) চারটি উত্তর: ক) একটি
-৪২. গমনের সময় মাছকে জল কেটে এগিয়ে যেতে এবং দেহের ভারসাম্য বজায় রাখতে সাহায্য করে কোন পাখনা? ক) পুচ্ছ পাখনা খ) পৃষ্ঠ পাখনা গ) পায়ু পাখনা ঘ) বক্ষ পাখনা উত্তর: খ) পৃষ্ঠ পাখনা
-৪৩. মাছের পায়ু পাখনার সংখ্যা কয়টি? ক) একটি খ) দুটি গ) তিনটি ঘ) চারটি উত্তর: ক) একটি
-৪৪. মাছের গমনে কোন পাখনার বিশেষ কোনো ভূমিকা নেই? ক) বক্ষ পাখনা খ) শ্রোণি পাখনা গ) পায়ু পাখনা ঘ) পৃষ্ঠ পাখনা উত্তর: গ) পায়ু পাখনা
-৪৫. পুচ্ছ পাখনা মাছের দেহের কোথায় অবস্থিত? ক) পৃষ্ঠদেশে খ) বক্ষদেশে গ) লেজের শেষভাগে ঘ) মাথার কাছে উত্তর: গ) লেজের শেষভাগে
-৪৬. পুচ্ছ পাখনার সংখ্যা কয়টি? ক) একটি খ) দুটি গ) তিনটি ঘ) চারটি উত্তর: ক) একটি
-৪৭. গমনের সময় মাছকে হালের মতো দিক পরিবর্তনে সাহায্য করে কোন পাখনা? ক) বক্ষ পাখনা খ) পুচ্ছ পাখনা গ) পৃষ্ঠ পাখনা ঘ) পায়ু পাখনা উত্তর: খ) পুচ্ছ পাখনা
-৪৮. জলের চাপে মাছ সামনের দিকে এগিয়ে যায় কিসের ফলে? ক) পাখনার গুটিয়ে যাওয়ার ফলে খ) মায়োটোম পেশির সংকোচনে মেরুদণ্ডের আন্দোলনের ফলে গ) মাছের চোখের নড়াচড়ার ফলে ঘ) মুখ দিয়ে জল ছাড়ার ফলে উত্তর: খ) মায়োটোম পেশির সংকোচনে মেরুদণ্ডের আন্দোলনের ফলে
-৪৯. মেরুদণ্ডী প্রাণীদের মধ্যে প্রকৃত উড্ডয়নকারী (true flight) প্রাণী কারা? ক) সাপ খ) ব্যাঙ গ) পাখি বা পায়রা ঘ) মাছ উত্তর: গ) পাখি বা পায়রা
-৫০. পাখির প্রধান উড্ডয়ন অঙ্গগুলি কী কী? ক) ডানা, পালক এবং উড্ডয়ন পেশি খ) পা, হাত এবং লেজ গ) পাখনা এবং মায়োটোম পেশি ঘ) সিলিয়া এবং ফ্ল্যাজেলা উত্তর: ক) ডানা, পালক এবং উড্ডয়ন পেশি
-৫১. পাখির কোন অঙ্গ দুটি ডানায় রূপান্তরিত হয়েছে? ক) পিছনের পা দুটি খ) লেজ গ) অগ্রপদ দুটি ঘ) ঘাড় উত্তর: গ) অগ্রপদ দুটি
-৫২. ডানা দুটিকে পর্যায়ক্রমে উপর-নীচে আন্দোলন করে পাখি কী করতে পারে? ক) সাঁতার কাটতে পারে খ) বাতাসে উড়তে পারে গ) মাটিতে হাঁটতে পারে ঘ) গাছের ডাল আঁকড়ে ধরতে পারে উত্তর: খ) বাতাসে উড়তে পারে
-৫৩. ডানার আন্দোলনের সময় বাতাসে সহজে ভেসে থাকতে পাখিকে কে সাহায্য করে? ক) লেজের নড়াচড়া খ) বাতাসের ঊর্ধ্বমুখী চাপ গ) পায়ের চলন ঘ) চোখের দৃষ্টি উত্তর: খ) বাতাসের ঊর্ধ্বমুখী চাপ (বাতাসের চাপ ডানায় বেশি পড়ে)
-৫৪. পাখির ডানার প্রান্তভাগে থাকা বড়ো পালকগুলিকে কী বলে? ক) রেকট্রিসেস খ) রেমিজেস গ) ডাউন ফেদার ঘ) কন্ট্যুর ফেদার উত্তর: খ) রেমিজেস
-৫৫. রেমিজেস পালকের সংখ্যা কয়টি? ক) ১২টি খ) ১৫টি গ) ২০টি ঘ) ২৩টি উত্তর: ঘ) ২৩টি
-৫৬. পাখির উড্ডয়নে রেমিজেস পালকের ভূমিকা কী? ক) দিক পরিবর্তন করা খ) ডানার তল বৃদ্ধি করে উড়তে সাহায্য করা গ) শরীর গরম রাখা ঘ) শ্বাসকার্য চালানো উত্তর: খ) ডানার তল বৃদ্ধি করে উড়তে সাহায্য করা
-৫৭. পাখির লেজে বা পুচ্ছভাগে থাকা বড়ো পালকগুলিকে কী বলে? ক) রেমিজেস খ) রেকট্রিসেস গ) মায়োটোম ঘ) ফ্ল্যাজেলা উত্তর: খ) রেকট্রিসেস
-৫৮. রেকট্রিসেস পালকের সংখ্যা কয়টি? ক) ১০টি খ) ১২টি গ) ২৩টি ঘ) ২৫টি উত্তর: খ) ১২টি
-৫৯. পাখির ওড়ার সময় দিক পরিবর্তনে সাহায্য করে কোন পালক? ক) রেমিজেস খ) রেকট্রিসেস গ) দেহের ছোট পালক ঘ) ডানার পালক উত্তর: খ) রেকট্রিসেস
-৬০. পাখির উড্ডয়ন পেশিগুলি কোথায় থাকে? ক) পায়ে খ) পিঠে গ) বক্ষে স্টারনাম (বুকের হাড়) সংলগ্ন অঞ্চলে ঘ) লেজে উত্তর: গ) বক্ষে স্টারনাম (বুকের হাড়) সংলগ্ন অঞ্চলে
-৬১. পাখির বক্ষে কয় জোড়া শক্তিশালী উড্ডয়ন পেশি থাকে? ক) এক জোড়া খ) দুই জোড়া গ) তিন জোড়া ঘ) চার জোড়া উত্তর: গ) তিন জোড়া
-৬২. নিচের কোনটি পাখির উড্ডয়ন পেশি নয়? ক) পেক্টোরালিস মেজর খ) পেক্টোরালিস মাইনর গ) গ্যাস্ট্রোকনেমিয়াস ঘ) কোরাকো ব্রাকিয়ালিস উত্তর: গ) গ্যাস্ট্রোকনেমিয়াস
-৬৩. পালক আবৃত ডানাকে ওপর থেকে নীচের দিকে টেনে আনে কোন পেশি? ক) পেক্টোরালিস মাইনর খ) পেক্টোরালিস মেজর গ) কোরাকো ব্রাকিয়ালিস ঘ) ট্রাইসেপস উত্তর: খ) পেক্টোরালিস মেজর
-৬৪. ডানাকে ওপরের দিকে তুলে দিতে সাহায্য করে কোন পেশি? ক) পেক্টোরালিস মেজর খ) পেক্টোরালিস মাইনর গ) বাইসেপস ঘ) মায়োটোম উত্তর: খ) পেক্টোরালিস মাইনর
-৬৫. পাখির উড্ডয়নে সাহায্যকারী তৃতীয় পেশিটির নাম কী? ক) ফ্লেক্সর খ) কোরাকো ব্রাকিয়ালিস গ) ডেলটয়েড ঘ) এক্সটেনসর উত্তর: খ) কোরাকো ব্রাকিয়ালিস
-৬৬. ডানা ক্রমাগত ওঠানামা করে কার অবিরাম সংকোচন ও প্রসারণের ফলে? ক) পালকের খ) হাড়ের গ) উড্ডয়ন পেশির ঘ) ফুসফুসের উত্তর: গ) উড্ডয়ন পেশির
-৬৭. মানুষের দুটি পায়ের সাহায্যে গমনকে কী বলে? ক) ত্রিপদ গমন খ) চতুস্পদ গমন গ) দ্বিপদ গমন (Bipedal locomotion) ঘ) সিলিয়ারি গমন উত্তর: গ) দ্বিপদ গমন (Bipedal locomotion)
-৬৮. মানুষের দ্বিপদ গমনে প্রধানত কোন অঙ্গটি দেহের সম্পূর্ণ ভার বহন করে? ক) হাত খ) পা (Lower limbs) গ) মাথা ঘ) কোমর উত্তর: খ) পা (Lower limbs)
-৬৯. মানুষের হাঁটার সময় দেহের ঊর্ধ্বাংশের অগ্রগতি ঘটলে কীসের পরিবর্তন ঘটে? ক) ভারকেন্দ্রের (centre of gravity) খ) দৃষ্টিশক্তির গ) হৃদস্পন্দনের ঘ) পরিপাকের উত্তর: ক) ভারকেন্দ্রের (centre of gravity)
-৭০. ভারকেন্দ্রের পরিবর্তনের ফলে দেহ কোন দিকে হেলে পড়ে? ক) পিছনের দিকে খ) ডান দিকে গ) সামনের দিকে ঘ) বাঁ দিকে উত্তর: গ) সামনের দিকে
-৭১. সামনের দিকে পতন রোধ করার জন্য মানুষ কী করে? ক) হাত দিয়ে মাটি ধরে খ) একটি পা সামনের দিকে প্রসারিত করে গ) পিছনের দিকে লাফ দেয় ঘ) বসে পড়ে উত্তর: খ) একটি পা সামনের দিকে প্রসারিত করে
-৭২. পা ফেলার সময় পায়ের গোড়ালি মাটি থেকে উপরে তুলতে সাহায্য করে কোন পেশি? ক) পেক্টোরালিস মেজর খ) ট্রাইসেপস গ) গ্যাস্ট্রোকনেমিয়াস (Gastrocnemius) ঘ) ডেলটয়েড উত্তর: গ) গ্যাস্ট্রোকনেমিয়াস (Gastrocnemius)
-৭৩. গোড়ালি ওপরে ওঠার পর পায়ের সম্মুখভাগ অগ্রসর হতে সাহায্য করে কোন পেশি? ক) এক্সটেনসর ডিজিটোরিয়াম খ) কোরাকো ব্রাকিয়ালিস গ) বাইসেপস ফিমোরিস ঘ) ল্যাটিসিমাস ডরসি উত্তর: ক) এক্সটেনসর ডিজিটোরিয়াম
-৭৪. হাঁটার সময় পা পুরোপুরি উত্তোলিত হয়ে সামনের দিকে এগোতে সাহায্য করে কোন পেশি? ক) বাইসেপস ফিমোরিস খ) পেক্টোরালিস মাইনর গ) এক্সটেনসর ঘ) রোটের পেশি উত্তর: ক) বাইসেপস ফিমোরিস
-৭৫. গমনের সময় প্রসারিত পা পুনরায় মাটিতে নেমে আসে কার প্রভাবে? ক) বাতাসের চাপে খ) পেশির প্রসারণ ও মাধ্যাকর্ষণের ফলে গ) শব্দের প্রভাবে ঘ) রক্তের চাপে উত্তর: খ) পেশির প্রসারণ ও মাধ্যাকর্ষণের ফলে
-৭৬. গমনের সময় দেহের ভারসাম্য বজায় রাখতে মানুষের হাত দুটি কীভাবে সঞ্চালিত হয়? ক) স্থির থাকে খ) কেবল সামনের দিকে থাকে গ) পর্যায়ক্রমে সামনে ও পিছনে আন্দোলিত হয় ঘ) কেবল পিছনের দিকে থাকে উত্তর: গ) পর্যায়ক্রমে সামনে ও পিছনে আন্দোলিত হয়
-৭৭. হাঁটার সময় বাম পা অগ্রসর হলে কোন হাত সামনে প্রসারিত হয়? ক) বাম হাত খ) ডান হাত গ) দুটি হাতই ঘ) কোনোটিই নয় উত্তর: খ) ডান হাত
-৭৮. গমনের সময় মানুষের দেহের ভারসাম্য নিয়ন্ত্রণ করে মস্তিষ্কের কোন অংশ? ক) গুরুমস্তিষ্ক খ) মধ্যমস্তিষ্ক গ) লঘুমস্তিষ্ক (Cerebellum) ঘ) সুষুম্নাশীর্ষক উত্তর: গ) লঘুমস্তিষ্ক (Cerebellum)
-৭৯. গমনের সময় মানুষের ভারসাম্য রক্ষায় লঘুমস্তিষ্ক ছাড়াও আর কোন অঙ্গ সাহায্য করে? ক) চোখ খ) অন্তঃকর্ণ গ) নাসিকা ঘ) ত্বক উত্তর: খ) অন্তঃকর্ণ
-৮০. অন্তঃকর্ণে অবস্থিত কোন অংশ দেহের ভারসাম্য রক্ষায় সহায়তা করে? ক) ককলিয়া খ) টিম্প্যানিক মেমব্রেন গ) অর্ধচন্দ্রাকার নালি ও অটোলিথ যন্ত্র ঘ) কানের লতি উত্তর: গ) অর্ধচন্দ্রাকার নালি ও অটোলিথ যন্ত্র
-৮১. দেহের অবস্থান পরিবর্তিত হলে অন্তঃকর্ণের কোন কণিকাগুলি উদ্দীপিত হয়? ক) অটোলিথ কণিকা খ) বালি কণা গ) ধূলিকণা ঘ) রক্তকণিকা উত্তর: ক) অটোলিথ কণিকা
-৮২. অটোলিথ কণিকা থেকে উদ্দীপনা কোন স্নায়ুর মাধ্যমে লঘুমস্তিষ্কে পৌঁছায়? ক) অপটিক স্নায়ু খ) অলফ্যাক্টরি স্নায়ু গ) অডিটরি স্নায়ু ঘ) ভেগাস স্নায়ু উত্তর: গ) অডিটরি স্নায়ু
-৮৩. লঘুমস্তিষ্ক থেকে উদ্দীপনা কোথায় পৌঁছালে দেহের ভারসাম্য বজায় থাকে? ক) থ্যালামাস খ) গুরুমস্তিষ্ক গ) পনস ঘ) সুষুম্নাকাণ্ড উত্তর: খ) গুরুমস্তিষ্ক
-৮৪. দুটি অস্থির (হাড়ের) সংযোগস্থলকে কী বলে? ক) লিগামেন্ট খ) টেনডন গ) অস্থিসন্ধি ঘ) পেশি উত্তর: গ) অস্থিসন্ধি
-৮৫. যে অস্থিসন্ধি সহজে নড়াচড়া করতে পারে এবং সাইনোভিয়াল পর্দা দ্বারা বেষ্টিত থাকে, তাকে কী বলে? ক) অচল সন্ধি খ) সচল বা সাইনোভিয়াল সন্ধি গ) পেশি সন্ধি ঘ) স্নায়ু সন্ধি উত্তর: খ) সচল বা সাইনোভিয়াল সন্ধি
-৮৬. সাইনোভিয়াল সন্ধির ভেতরের গহ্বরে কোন তরল থাকে? ক) রক্ত খ) সাইনোভিয়াল তরল গ) সেরিব্রোস্পাইনাল ফ্লুইড ঘ) লসিকা উত্তর: খ) সাইনোভিয়াল তরল
-৮৭. গমনের সময় সাইনোভিয়াল তরলের প্রধান কাজ কী? ক) হাড়ের বৃদ্ধি ঘটানো খ) হাড়ের মধ্যে ঘর্ষণ কমায় এবং অস্থিকে সহজে সঞ্চালিত হতে সাহায্য করে গ) রক্ত সরবরাহ করা ঘ) পেশি তৈরি করা উত্তর: খ) হাড়ের মধ্যে ঘর্ষণ কমায় এবং অস্থিকে সহজে সঞ্চালিত হতে সাহায্য করে
-৮৮. অস্থিসন্ধিগুলি একে অপরের সাথে শক্তভাবে আবদ্ধ থাকে কিসের সাহায্যে? ক) লিগামেন্ট (Ligament) খ) টেনডন গ) সাইনোভিয়াল পর্দা ঘ) তরুণাস্থি উত্তর: ক) লিগামেন্ট (Ligament)
-৮৯. পেশি অস্থির সাথে যুক্ত থাকে কিসের সাহায্যে? ক) লিগামেন্ট খ) টেনডন বা কন্ডরা (Tendon) গ) মেনিনজেস ঘ) রক্তবাহ উত্তর: খ) টেনডন বা কন্ডরা (Tendon)
-৯০. দরজার কবজার মতো যে সন্ধি কেবল একদিকে নড়াচড়ায় সাহায্য করে, তাকে কী বলে? ক) বল ও সকেট সন্ধি খ) কবজা সন্ধি (Hinge joint) গ) পিভট সন্ধি ঘ) স্যাডল সন্ধি উত্তর: খ) কবজা সন্ধি (Hinge joint)
-৯১. কবজা সন্ধি কত ডিগ্রি কোণে সঞ্চালিত হতে পারে? ক) ৯০° খ) ১৮০° গ) ২৭০° ঘ) ৩৬০° উত্তর: খ) ১৮০°
-৯২. নিচের কোনটি কবজা সন্ধির উদাহরণ? ক) কাঁধের জয়েন্ট খ) উরু সন্ধি গ) হাঁটু সন্ধি ও কনুইয়ের সন্ধি ঘ) গলার সন্ধি উত্তর: গ) হাঁটু সন্ধি ও কনুইয়ের সন্ধি
-৯৩. যে সন্ধিতে একটি অস্থির গোলাকার প্রান্ত অপর অস্থির একটি গর্তের বা সকেটের মধ্যে থাকে, তাকে কী বলে? ক) কবজা সন্ধি খ) বল ও সকেট সন্ধি (Ball and Socket Joint) গ) গ্লাইডিং সন্ধি ঘ) ফিক্সড সন্ধি উত্তর: খ) বল ও সকেট সন্ধি (Ball and Socket Joint)
-৯৪. বল ও সকেট সন্ধির প্রধান সুবিধা কী? ক) এটি একদম নড়াচড়া করতে পারেবিধা খ) এটি অঙ্গকে সবদিকে স্বাধীনভাবে সঞ্চালিত করতে সাহায্য করে গ) এটি কেবল একদিকে ঘোরে ঘ) এটি হাড়ের বৃদ্ধি ঘটায় উত্তর: খ) এটি অঙ্গকে সবদিকে স্বাধীনভাবে সঞ্চালিত করতে সাহায্য করে
-৯৫. মানুষের উরুসন্ধি (হিপ জয়েন্ট) কোন দুটি অস্থির সংযোগে গঠিত? ক) ফিমার ও টিবিয়া খ) ফিমার ও শ্রোণিচক্র গ) হিউমেরাস ও স্ক্যাপুলা ঘ) রেডিয়াস ও আলনা উত্তর: খ) ফিমার ও শ্রোণিচক্র
-৯৬. মানুষের স্কন্ধসন্ধি বা কাঁধের জয়েন্ট কোন দুটি অস্থির সংযোগে গঠিত? ক) হিউমেরাস ও স্ক্যাপুলা খ) ফিমার ও শ্রোণিচক্র গ) টিবিয়া ও ফিবুলা ঘ) কার্পাল ও মেটাকার্পাল উত্তর: ক) হিউমেরাস ও স্ক্যাপুলা
-৯৭. উরুসন্ধি এবং স্কন্ধসন্ধি কোন প্রকার সন্ধির উদাহরণ? ক) কবজা সন্ধি খ) বল ও সকেট সন্ধি গ) অচল সন্ধি ঘ) ফাইবার সন্ধি উত্তর: খ) বল ও সকেট সন্ধি
-৯৮. কঙ্কালসংলগ্ন পেশি (Skeletal muscle) কাকে বলে? ক) যেসব পেশি হৃদপিণ্ডে থাকে খ) যেসব ঐচ্ছিক পেশি কঙ্কালতন্ত্র বা অস্থির সঙ্গে যুক্ত থাকে গ) যেসব অনৈচ্ছিক পেশি পাকস্থলীতে থাকে ঘ) যেসব পেশি রক্তনালীতে থাকে উত্তর: খ) যেসব ঐচ্ছিক পেশি কঙ্কালতন্ত্র বা অস্থির সঙ্গে যুক্ত থাকে
-৯৯. গমনে কঙ্কাল পেশির প্রধান কাজ কী? ক) রক্ত পাম্প করা খ) খাবার হজম করা গ) সংকোচন ও প্রসারণের ফলে অস্থিগুলির নড়াচড়া বা সঞ্চালন ঘটানো ঘ) হরমোন তৈরি করা উত্তর: গ) সংকোচন ও প্রসারণের ফলে অস্থিগুলির নড়াচড়া বা সঞ্চালন ঘটানো
-১০০. যে প্রক্রিয়ায় দুটি অস্থি ভাঁজ হতে বা কাছাকাছি আসতে সহায়তা করে, তাকে কী বলে? ক) এক্সটেনসন খ) ফ্লেক্সন (Flexion) গ) রোটেশন ঘ) অ্যাবডাকশন উত্তর: খ) ফ্লেক্সন (Flexion)
-১০১. ফ্লেক্সন প্রক্রিয়ায় সাহায্যকারী পেশিকে কী বলে? ক) এক্সটেনসর পেশি খ) ফ্লেক্সর পেশি (Flexor muscle) গ) রোটেটর পেশি ঘ) অ্যাবডাক্টর পেশি উত্তর: খ) ফ্লেক্সর পেশি (Flexor muscle)
-১০২. হাতের কনুই সন্ধিকে ভাঁজ হতে সাহায্য করে কোন পেশি? ক) ট্রাইসেপস পেশি খ) ডেলটয়েড পেশি গ) বাইসেপস পেশি ঘ) ল্যাটিসিমাস ডরসি পেশি উত্তর: গ) বাইসেপস পেশি
-১০৩. মানুষের পা ভাঁজ করে তুলতে সাহায্য করে কোন ফ্লেক্সর পেশি? ক) বাইসেপস ফিমোরিস খ) কোয়াড্রিসেপস গ) ডেলটয়েড ঘ) ট্রাইসেপস উত্তর: ক) বাইসেপস ফিমোরিস
-১০৪. যে প্রক্রিয়ায় সন্ধিস্থল প্রসারিত হয় অর্থাৎ ভাঁজ করা অঙ্গ দূরে সরে যায় বা সোজা হয়, তাকে কী বলে? ক) ফ্লেক্সন খ) রোটেশন গ) এক্সটেনসন (Extension) ঘ) অ্যাডাকশন উত্তর: গ) এক্সটেনসন (Extension)
-১০৫. এক্সটেনসন প্রক্রিয়ায় সাহায্যকারী পেশিকে কী বলে? ক) এক্সটেনসর পেশি (Extensor muscle) খ) ফ্লেক্সর পেশি গ) অ্যাডাক্টর পেশি ঘ) অ্যাবডাক্টর পেশি উত্তর: ক) এক্সটেনসর পেশি (Extensor muscle)
-১০৬. হাতের ভাঁজ করা কনুই সোজা করতে কোন পেশি সাহায্য করে? ক) বাইসেপস পেশি খ) ট্রাইসেপস পেশি গ) ডেলটয়েড পেশি ঘ) পাইরিফরমিস পেশি উত্তর: খ) ট্রাইসেপস পেশি
-১০৭. ভাঁজ করা পা-কে সোজা করে মাটিতে ফেলতে সাহায্য করে কোন এক্সটেনসর পেশি? ক) কোয়াড্রিসেপস (Quadriceps) খ) বাইসেপস ফিমোরিস গ) ল্যাটিসিমাস ডরসি ঘ) ডেলটয়েড উত্তর: ক) কোয়াড্রিসেপস (Quadriceps)
-১০৮. ফ্লেক্সন এবং এক্সটেনসন একে অপরের কী রূপ প্রক্রিয়া? ক) সমার্থক প্রক্রিয়া খ) বিপরীত প্রক্রিয়া গ) সম্পর্কহীন প্রক্রিয়া ঘ) একই প্রক্রিয়া উত্তর: খ) বিপরীত প্রক্রিয়া
-১০৯. যে প্রক্রিয়ায় কোনো অঙ্গ দেহাক্ষ থেকে দূরে সরে যায়, তাকে কী বলে? ক) অ্যাডাকশন খ) অ্যাবডাকশন (Abduction) গ) ফ্লেক্সন ঘ) রোটেশন উত্তর: খ) অ্যাবডাকশন (Abduction)
-১১০. অ্যাবডাকশন প্রক্রিয়ায় অংশগ্রহণকারী পেশিকে কী বলে? ক) ফ্লেক্সর পেশি খ) অ্যাডাক্টর পেশি গ) অ্যাবডাক্টর পেশি (Abductor muscle) ঘ) রোটেটর পেশি উত্তর: গ) অ্যাবডাক্ট পেশি (Abductor muscle)
-১১১. হাতকে দেহাক্ষ থেকে দূরে সরে যেতে সাহায্য করে কোন পেশি? ক) ল্যাটিসিমাস ডরসি খ) ডেলটয়েড পেশি গ) ট্রাইসেপস ঘ) বাইসেপস উত্তর: খ) ডেলটয়েড পেশি
-১১২. যে প্রক্রিয়ায় কোনো অঙ্গ দেহাক্ষের নিকটবর্তী হতে সহায়তা করে, তাকে কী বলে? ক) অ্যাডাকশন (Adduction)খ) অ্যাবডাকশন গ) এক্সটেনসন ঘ) রোটেশন উত্তর: ক) অ্যাডাকশন (Adduction)
-১১৩. অ্যাডাকশন প্রক্রিয়ায় সাহায্যকারী পেশিকে কী বলে? ক) অ্যাবডাক্টর পেশি খ) ফ্লেক্সর পেশি গ) অ্যাডাক্টর পেশি (Adductor muscle) ঘ) এক্সটেনসর পেশি উত্তর: গ) অ্যাডাক্টর পেশি (Adductor muscle)
-১১৪. হাতকে দেহাক্ষের নিকটবর্তী হতে সাহায্য করে কোন পেশি? ক) ডেলটয়েড পেশি খ) ল্যাটিসিমাস ডরসি পেশি গ) ট্রাইসেপস ঘ) বাইসেপস উত্তর: খ) ল্যাটিসিমাস ডরসি পেশি
-১১৫. যে প্রক্রিয়ায় দেহের কোনো অংশ আবর্তিত হয় বা ঘোরে, তাকে কী বলে? ক) ফ্লেক্সন খ) রোটেশন (Rotation) গ) এক্সটেনসন ঘ) অ্যাডাকশন উত্তর: খ) রোটেশন (Rotation)
-১১৬. রোটেশন প্রক্রিয়ায় অংশগ্রহণকারী পেশিকে কী বলে? ক) রোটেটর পেশি (Rotator muscle) খ) ফ্লেক্সর পেশি গ) এক্সটেনসর পেশি ঘ) অ্যাবডাক্টর পেশি উত্তর: ক) রোটেটর পেশি (Rotator muscle)
-১১৭. ফিমারকে আবর্তিত করতে বা ঘোরাতে সহায়তা করে কোন পেশি? ক) ডেলটয়েড পেশি খ) পাইরিফরমিস পেশি (Piriformis muscle) গ) বাইসেপস পেশি ঘ) ট্রাইসেপস পেশি উত্তর: খ) পাইরিফরমিস পেশি (Piriformis muscle)
-১১৮. কবজা সন্ধি কোথায় দেখা যায়? ক) মাথার খুলিতে খ) উরুতে গ) হাঁটুতে ঘ) মেরুদণ্ডে উত্তর: গ) হাঁটুতে
-১১৯. সাইনোভিয়াল তরল না থাকলে অস্থিসন্ধিতে কী সমস্যা হতে পারে? ক) হাড় বড় হয়ে যাবে খ) হাড়ের মধ্যে ঘর্ষণ বাড়বে ও নড়াচড়ায় অসুবিধা হবে গ) পেশি দুর্বল হয়ে যাবে ঘ) রক্ত জমাট বাঁধবে উত্তর: খ) হাড়ের মধ্যে ঘর্ষণ বাড়বে ও নড়াচড়ায় অসুবিধা হবে
-১২০. মানুষের গমনের সময় পা ফেলার পদ্ধতিকে পর্যায়ক্রমিক কী বলা যেতে পারে? ক) রোটেশন খ) অ্যাবডাকশন গ) ফ্লেক্সন ও এক্সটেনসনের সমন্বয় ঘ) শুধু অ্যাডাকশন উত্তর: গ) ফ্লেক্সন ও এক্সটেনসনের সমন্বয়
-১২১. মানুষের হাঁটুর নীচে থাকা 'কাফ মাসল' (calf muscle)-এর বিজ্ঞানসম্মত নাম কী? ক) বাইসেপস খ) গ্যাস্ট্রোকনেমিয়াস গ) ডেলটয়েড ঘ) ট্রাইসেপস উত্তর: খ) গ্যাস্ট্রোকনেমিয়াস
-১২২. মাছের পাখনার গোড়ায় অবস্থিত মজবুত পেশি কী করতে সাহায্য করে? ক) পাখনাকে ছিঁড়ে যেতে দেয় না এবং নড়াচড়ায় সাহায্য করে খ) মাছের রং পরিবর্তন করে গ) মাছকে শ্বাস নিতে সাহায্য করে ঘ) খাবার হজম করে উত্তর: ক) পাখনাকে ছিঁড়ে যেতে দেয় না এবং নড়াচড়ায় সাহায্য করে
-১২৩. পাখির ডানার পালকগুলির গোড়া কোন হাড়ের সাথে যুক্ত থাকে? ক) লেজের হাড়ের সাথে খ) অগ্রপদের রূপান্তরিত হাড়ের সাথে গ) খুলির হাড়ের সাথে ঘ) পাঁজরের হাড়ের সাথে উত্তর: খ) অগ্রপদের রূপান্তরিত হাড়ের সাথে
-১২৪. প্রাণীদের গমনে পেশির ভূমিকাটি প্রধানত কেমন প্রকৃতির? ক) রাসায়নিক খ) নিষ্ক্রিয় গ) সংকোচনশীল (Contractile) ঘ) শুধু স্থিতিস্থাপক উত্তর: গ) সংকোচনশীল (Contractile)
-১২৫. দ্বিপদ গমনে মানুষের মস্তিষ্ক থেকে আসা নির্দেশ পেশিগুলোতে পৌঁছায় কার মাধ্যমে? ক) হরমোনের মাধ্যমে খ) স্নায়ুর (Nerves) মাধ্যমে গ) রক্তের মাধ্যমে ঘ) লসিকার মাধ্যমে উত্তর: খ) স্নায়ুর (Nerves) মাধ্যমে
-</textarea>
-
+    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
-        const allQuestionsData = {};
+        // ==========================================
+        // 1. CONFIGURATION & STATE
+        // ==========================================
         
-        const topics = [
-            { id: 't1', name: 'উদ্দীপক, সংবেদনশীলতা এবং চলন', color: 'bg-emerald-500', icon: '🌱' },
-            { id: 't2', name: 'উদ্ভিদ হরমোন ও বৈশিষ্ট্য', color: 'bg-green-600', icon: '🌿' },
-            { id: 't3', name: 'প্রাণী হরমোন ও গ্রন্থি', color: 'bg-blue-600', icon: '🧬' },
-            { id: 't4', name: 'স্নায়বিক নিয়ন্ত্রণ ও স্নায়ুতন্ত্র', color: 'bg-indigo-600', icon: '🧠' },
-            { id: 't5', name: 'মস্তিষ্ক এবং সুষুম্নাকাণ্ড', color: 'bg-purple-600', icon: '⚡' },
-            { id: 't6', name: 'প্রতিবর্ত ক্রিয়া এবং পথ', color: 'bg-orange-500', icon: '🔄' },
-            { id: 't7', name: 'চোখ বা দর্শনেন্দ্রিয়', color: 'bg-cyan-600', icon: '👁️' },
-            { id: 't8', name: 'গমন ও অস্থিসন্ধি', color: 'bg-rose-500', icon: '🏃' }
+        // REPLACE THIS URL WITH YOUR PUBLISHED GOOGLE APPS SCRIPT WEB APP URL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby0nBKY6U_iz4yeQkufV1rUsUtsyI-GtFPB7prsT9Q4UEVEKRrscCF5ctj90uEZGBV_TQ/exec"; 
+
+        const CHAPTERS = [
+            "জীবজগতে নিয়ন্ত্রণ ও সমন্বয়",
+            "জীবনের প্রবাহমানতা",
+            "বংশগতি এবং কয়েকটি সাধারণ জিনগত রোগ",
+            "অভিব্যক্তি ও অভিযোজন",
+            "পরিবেশ, তার সম্পদ এবং তাদের সংরক্ষণ"
         ];
 
-        // GOOGLE SCRIPT URL (Replace with yours after deploying)
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2c5p66xWDvuCqfFIqDFHcDu1fqTrrjzdG1AIDDR7J5CvvaQTqKildtm1QSX0BJJisog/exec"; 
-        
-        let studentData = {};
-        let currentTopicId = '';
-        let currentQuestions = [];
-        let currentIndex = 0;
-        let score = 0;
-        let isAnswered = false;
-        let isTestMode = false;
+        let state = {
+            currentUser: null, // object for student, 'admin' for admin
+            view: 'login', // login, student, admin
+            data: { materials: [], videos: [], mockTests: [], practiceTests: [], students: [], logs: [] },
+            currentChapter: 0,
+            studentTab: 'notes',
+            score: 0
+        };
 
-        function submitStudentInfo(e) {
+        // ==========================================
+        // 2. UTILITY FUNCTIONS
+        // ==========================================
+
+        function showSpinner(show) {
+            document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const color = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            toast.className = `${color} text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full flex items-center gap-2`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toBengaliNum(num) {
+            const digits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            return num.toString().split('').map(d => digits[d] || d).join('');
+        }
+
+        function toggleSidebar(id) {
+            const sidebar = document.getElementById(id);
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // ==========================================
+        // 3. API & DATA MANAGEMENT
+        // ==========================================
+
+        async function fetchAPI(action = 'get', payload = null) {
+            if(GAS_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE"){
+                // Mock behavior if URL is not set
+                console.warn("GAS URL not set. Using LocalStorage Fallback.");
+                return handleLocalAPI(action, payload);
+            }
+
+            try {
+                if (action === 'get') {
+                    const res = await fetch(GAS_URL);
+                    const json = await res.json();
+                    if(json.status === 'success') {
+                        state.data = json.data;
+                        localStorage.setItem('ls_data', JSON.stringify(state.data));
+                        return true;
+                    }
+                } else {
+                    const res = await fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action, data: payload })
+                    });
+                    const json = await res.json();
+                    return json.status === 'success';
+                }
+            } catch (err) {
+                console.error("API Error:", err);
+                // Fallback to local storage
+                return handleLocalAPI(action, payload);
+            }
+        }
+
+        function handleLocalAPI(action, payload) {
+            const local = JSON.parse(localStorage.getItem('ls_data')) || { materials: [], videos: [], mockTests: [], practiceTests: [], students: [], logs: [] };
+            
+            if (action === 'get') {
+                state.data = local;
+                return true;
+            } else {
+                let key = action.replace('add_', '') + 's';
+                if(key === 'student_logs') key = 'logs'; // fix formatting
+                if(local[key]) local[key].push(payload);
+                state.data = local;
+                localStorage.setItem('ls_data', JSON.stringify(local));
+                return true;
+            }
+        }
+
+        async function initData() {
+            showSpinner(true);
+            await fetchAPI('get');
+            showSpinner(false);
+        }
+
+        // ==========================================
+        // 4. AUTHENTICATION
+        // ==========================================
+
+        function toggleAuthTab(type) {
+            document.getElementById('form-student-login').classList.toggle('hidden', type !== 'student');
+            document.getElementById('form-admin-login').classList.toggle('hidden', type !== 'admin');
+            
+            const stdTab = document.getElementById('tab-login-student');
+            const admTab = document.getElementById('tab-login-admin');
+            
+            if(type === 'student') {
+                stdTab.classList.replace('text-gray-500', 'text-primary');
+                stdTab.classList.replace('hover:bg-gray-50', 'bg-gray-50');
+                stdTab.classList.add('border-b-2', 'border-primary');
+                
+                admTab.classList.replace('text-primary', 'text-gray-500');
+                admTab.classList.remove('border-b-2', 'border-primary');
+            } else {
+                admTab.classList.replace('text-gray-500', 'text-primary');
+                admTab.classList.replace('hover:bg-gray-50', 'bg-gray-50');
+                admTab.classList.add('border-b-2', 'border-primary');
+                
+                stdTab.classList.replace('text-primary', 'text-gray-500');
+                stdTab.classList.remove('border-b-2', 'border-primary');
+            }
+        }
+
+        async function handleStudentLogin(e) {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.innerHTML = `অপেক্ষা করো... <svg class="animate-spin h-5 w-5 ml-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
-            btn.disabled = true;
-
-            studentData = {
-                name: document.getElementById('s-name').value,
-                className: document.getElementById('s-class').value,
-                section: document.getElementById('s-sec').value,
-                roll: document.getElementById('s-roll').value,
-                school: document.getElementById('s-school').value,
-                timestamp: new Date().toLocaleString()
+            const student = {
+                name: document.getElementById('std-name').value.trim(),
+                roll: document.getElementById('std-roll').value.trim(),
+                section: document.getElementById('std-sec').value.trim().toUpperCase(),
+                class: document.getElementById('std-class').value,
+                school: document.getElementById('std-school').value.trim()
             };
 
-            if (!GOOGLE_SCRIPT_URL) {
-                enterApp();
-                return;
+            showSpinner(true);
+            await initData(); // Refresh data
+
+            // Check if exists, else add
+            const exists = state.data.students.find(s => s.roll == student.roll && s.name === student.name);
+            if (!exists) {
+                await fetchAPI('add_student', student);
             }
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(studentData)
-            }).then(response => {
-                enterApp();
-            }).catch(err => {
-                console.error("Error:", err);
-                alert("তথ্য সেভ করতে সমস্যা হয়েছে। দয়া করে ইন্টারনেট কানেকশন চেক করো।");
-                btn.innerHTML = `কুইজ শুরু করো <svg class="h-6 w-6 inline ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>`;
-                btn.disabled = false;
-            });
+            // Add Log
+            const log = {
+                date: new Date().toLocaleString('en-IN'),
+                name: student.name,
+                roll: student.roll,
+                classSec: `${student.class} - ${student.section}`
+            };
+            await fetchAPI('add_log', log);
+
+            localStorage.setItem('auth_user', JSON.stringify({ type: 'student', data: student }));
+            state.currentUser = student;
+            showToast(`স্বাগতম, ${student.name}!`);
+            showSpinner(false);
+            initApp();
         }
 
-        function enterApp() {
-            document.getElementById('login-page').classList.add('hidden');
-            document.getElementById('home-page').classList.remove('hidden');
-            document.getElementById('welcome-msg').innerHTML = `<span class="text-indigo-600 font-bold">স্বাগতম, ${studentData.name}!</span> নিচে থেকে একটি টপিক নির্বাচন করো।`;
-            initTopics();
-            window.scrollTo(0,0);
-        }
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const id = document.getElementById('admin-id').value;
+            const pwd = document.getElementById('admin-pwd').value;
 
-        function parseRawData() {
-            const rawText = document.getElementById('r').value;
-            const blocks = rawText.split(/_T\d+_/);
-            const tKeys = ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'];
-
-            for (let i = 1; i < blocks.length; i++) {
-                let qs = blocks[i].replace(/\n/g, ' ').split(/(?:^|\s)[০-৯0-9]+\.\s+/).filter(x => x.trim());
-                let arr = [];
-                
-                qs.forEach(q => {
-                    let p = q.split(/\s*উত্তর:\s*/);
-                    if (p.length < 2) return;
-                    
-                    let mainPart = p[0];
-                    let ansPart = p[1].trim();
-                    
-                    let aMatch = ansPart.match(/^([A-Dক-ঘ])\)/i);
-                    let aIndex = -1;
-                    if (aMatch) {
-                        let char = aMatch[1].toUpperCase();
-                        if (char === 'A' || char === 'ক') aIndex = 0;
-                        else if (char === 'B' || char === 'খ') aIndex = 1;
-                        else if (char === 'C' || char === 'গ') aIndex = 2;
-                        else if (char === 'D' || char === 'ঘ') aIndex = 3;
-                    }
-                    
-                    let qParts = mainPart.split(/\s*[A-Dক-ঘ]\)\s*/i);
-                    let qText = qParts[0].trim();
-                    let options = [];
-                    for (let j = 1; j < qParts.length; j++) {
-                        if (qParts[j].trim()) options.push(qParts[j].trim());
-                    }
-                    
-                    let exactAnsText = (aIndex !== -1 && options[aIndex]) 
-                                        ? options[aIndex] 
-                                        : ansPart.replace(/^[A-Dক-ঘ]\)\s*/i, '').trim();
-                    
-                    if (options.length >= 2) {
-                        arr.push({ q: qText, o: options, a: exactAnsText, rawA: ansPart });
-                    }
-                });
-                allQuestionsData[tKeys[i - 1]] = arr;
+            if (id === 'admin' && pwd === '1234') {
+                localStorage.setItem('auth_user', JSON.stringify({ type: 'admin' }));
+                state.currentUser = 'admin';
+                showToast('অ্যাডমিন লগইন সফল!');
+                initApp();
+            } else {
+                showToast('ভুল আইডি বা পাসওয়ার্ড!', 'error');
             }
         }
 
-        function initTopics() {
-            parseRawData();
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
+        function logout() {
+            localStorage.removeItem('auth_user');
+            state.currentUser = null;
+            initApp();
+        }
+
+        // ==========================================
+        // 5. ROUTING & INITIALIZATION
+        // ==========================================
+
+        async function initApp() {
+            const authStr = localStorage.getItem('auth_user');
+            if (authStr) {
+                const auth = JSON.parse(authStr);
+                if (auth.type === 'admin') {
+                    state.currentUser = 'admin';
+                    document.getElementById('view-login').classList.add('hidden');
+                    document.getElementById('view-student').classList.add('hidden');
+                    document.getElementById('view-admin').classList.remove('hidden');
+                    await initData();
+                    switchAdminTab('students');
+                } else {
+                    state.currentUser = auth.data;
+                    document.getElementById('view-login').classList.add('hidden');
+                    document.getElementById('view-admin').classList.add('hidden');
+                    document.getElementById('view-student').classList.remove('hidden');
+                    document.getElementById('std-user-name').innerText = auth.data.name;
+                    await initData();
+                    renderStudentSidebar();
+                    loadStudentView('chapter', 0);
+                }
+            } else {
+                document.getElementById('view-student').classList.add('hidden');
+                document.getElementById('view-admin').classList.add('hidden');
+                document.getElementById('view-login').classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // 6. STUDENT DASHBOARD LOGIC
+        // ==========================================
+
+        function renderStudentSidebar() {
+            const list = document.getElementById('std-chapter-list');
+            list.innerHTML = CHAPTERS.map((ch, idx) => `
+                <button onclick="loadStudentView('chapter', ${idx})" class="std-nav-btn w-full text-left px-5 py-3 hover:bg-emerald-50 text-gray-700 font-medium border-l-4 border-transparent hover:border-primary transition flex items-center gap-3 text-sm" data-idx="${idx}">
+                    <div class="w-6 h-6 rounded-full bg-emerald-100 text-primary flex items-center justify-center font-bold text-xs shrink-0">${toBengaliNum(idx+1)}</div>
+                    <span class="line-clamp-2">${ch}</span>
+                </button>
+            `).join('');
+        }
+
+        function loadStudentView(type, index = null) {
+            const main = document.getElementById('std-main-content');
             
-            topics.forEach(topic => {
-                const count = allQuestionsData[topic.id] ? allQuestionsData[topic.id].length : 0;
-                const card = document.createElement('div');
-                card.className = `${topic.color} p-8 rounded-[2.5rem] text-white shadow-xl cursor-pointer hover:scale-[1.03] transition-all flex flex-col justify-between min-h-[240px] border-b-[6px] border-black/20`;
-                card.onclick = () => startQuiz(topic.id);
-                card.innerHTML = `
-                    <div>
-                        <div class="text-5xl mb-4">${topic.icon}</div>
-                        <h3 class="text-2xl font-bold leading-tight mb-2">${topic.name}</h3>
-                    </div>
-                    <div class="flex justify-between items-end mt-4">
-                        <span class="bg-black/20 px-4 py-1.5 rounded-xl text-lg font-bold">মোট ${count} প্রশ্ন</span>
-                        <div class="p-2 bg-white/20 rounded-2xl backdrop-blur-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7" />
-                            </svg>
+            // Highlight nav
+            document.querySelectorAll('.std-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-50', 'border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-gray-700');
+            });
+
+            if (type === 'mock') {
+                state.currentChapter = null;
+                renderMockTests(main);
+            } else if (type === 'chapter') {
+                state.currentChapter = index;
+                // highlight active chapter
+                const activeBtn = document.querySelector(`.std-nav-btn[data-idx="${index}"]`);
+                if(activeBtn) {
+                    activeBtn.classList.remove('border-transparent', 'text-gray-700');
+                    activeBtn.classList.add('bg-emerald-50', 'border-primary', 'text-primary');
+                }
+                renderChapterContent(main, index);
+            }
+
+            // close mobile sidebar
+            if (window.innerWidth < 768) {
+                document.getElementById('std-sidebar').classList.add('-translate-x-full');
+            }
+        }
+
+        function renderMockTests(container) {
+            const tests = state.data.mockTests;
+            
+            let html = `
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-laptop-file text-blue-500"></i> মক টেস্ট সমূহ</h2>
+            `;
+
+            if (tests.length === 0) {
+                html += `<div class="bg-white p-8 rounded-xl shadow text-center text-gray-500">বর্তমানে কোনো মক টেস্ট উপলব্ধ নেই।</div>`;
+            } else {
+                html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                tests.forEach((t, i) => {
+                    html += `
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <div class="flex items-start gap-4">
+                                <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-signature"></i></div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800 mb-2">${t.title}</h3>
+                                    <button onclick="openExternalTest('${t.link}')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                                        Test Start করুন <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function openExternalTest(url) {
+            alert('এই টেস্টটি একটি বাইরের লিংকে (যেমন Google Form) খুলবে।');
+            window.open(url, '_blank');
+        }
+
+        function renderChapterContent(container, chapterIndex) {
+            const chName = CHAPTERS[chapterIndex];
+            state.studentTab = state.studentTab || 'notes';
+            state.score = 0; // Reset score on chapter change
+
+            let html = `
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-l-4 border-primary">
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">অধ্যায় ${toBengaliNum(chapterIndex + 1)}: ${chName}</h2>
                     </div>
-                `;
-                grid.appendChild(card);
-            });
+
+                    <!-- Tabs -->
+                    <div class="flex gap-2 border-b mb-6 overflow-x-auto pb-1 hide-scrollbar">
+                        <button onclick="switchChapterTab('notes')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'notes' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-solid fa-book-open mr-2"></i>স্টাডি নোটস</button>
+                        <button onclick="switchChapterTab('videos')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'videos' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-brands fa-youtube text-red-500 mr-2"></i>ভিডিও ক্লাস</button>
+                        <button onclick="switchChapterTab('mcq')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'mcq' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-solid fa-brain text-purple-500 mr-2"></i>প্র্যাকটিস MCQ</button>
+                    </div>
+                    
+                    <div id="tab-content-area"></div>
+                </div>
+            `;
+            container.innerHTML = html;
+            switchChapterTab(state.studentTab);
         }
 
-        function shuffle(array) {
-            let m = array.length, t, i;
-            while (m) {
-                i = Math.floor(Math.random() * m--);
-                t = array[m];
-                array[m] = array[i];
-                array[i] = t;
-            }
-            return array;
-        }
-
-        function startQuiz(topicId) {
-            isTestMode = false;
-            currentTopicId = topicId;
-            const topic = topics.find(t => t.id === topicId);
-            document.getElementById('t-name').innerText = topic.name;
+        function switchChapterTab(tab) {
+            state.studentTab = tab;
+            const area = document.getElementById('tab-content-area');
+            if(!area) return;
             
-            currentQuestions = shuffle([...allQuestionsData[topicId]]);
-            currentIndex = 0;
-            score = 0;
-            
-            document.getElementById('home-page').classList.add('hidden');
-            document.getElementById('finish-page').classList.add('hidden');
-            document.getElementById('quiz-page').classList.remove('hidden');
-            window.scrollTo(0,0);
-            loadQuestion();
-        }
-
-        function startTest(numQuestions) {
-            isTestMode = true;
-            currentTopicId = 'self_test';
-            document.getElementById('t-name').innerText = `মক টেস্ট (${numQuestions}টি প্রশ্ন)`;
-            
-            let allQs = [];
-            for (let key in allQuestionsData) {
-                allQs = allQs.concat(allQuestionsData[key]);
-            }
-            
-            allQs = shuffle(allQs);
-            currentQuestions = allQs.slice(0, numQuestions);
-            
-            currentIndex = 0;
-            score = 0;
-            
-            document.getElementById('home-page').classList.add('hidden');
-            document.getElementById('finish-page').classList.add('hidden');
-            document.getElementById('quiz-page').classList.remove('hidden');
-            window.scrollTo(0,0);
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            isAnswered = false;
-            const q = currentQuestions[currentIndex];
-            
-            document.getElementById('q-prog').innerText = `প্রশ্ন: ${currentIndex + 1} / ${currentQuestions.length}`;
-            document.getElementById('q-text').innerText = q.q;
-            
-            const optionsContainer = document.getElementById('opts');
-            optionsContainer.innerHTML = '';
-            
-            const shuffledOptions = shuffle([...q.o]);
-
-            shuffledOptions.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = `btn-option w-full text-left p-6 text-[1.4rem] font-bold bg-white border-4 border-slate-100 rounded-3xl hover:border-indigo-400 hover:bg-indigo-50 transition-all shadow-sm active:scale-[0.98]`;
-                btn.innerText = opt;
-                btn.onclick = () => checkAnswer(btn, opt, q.a, q.rA);
-                optionsContainer.appendChild(btn);
-            });
-
-            document.getElementById('fb').classList.add('hidden');
-            document.getElementById('next').classList.add('hidden');
-        }
-
-        function checkAnswer(selectedBtn, selectedOpt, correctOpt, rawAnswerString) {
-            if (isAnswered) return;
-            isAnswered = true;
-
-            const buttons = document.querySelectorAll('.btn-option');
-            const feedbackBox = document.getElementById('fb');
-            const feedbackMsg = document.getElementById('fb-msg');
-            const correctDisplay = document.getElementById('fb-ans');
-
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                if (btn.innerText === correctOpt) {
-                    btn.classList.remove('bg-white', 'border-slate-100');
-                    btn.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+            // Re-render tabs highlighting
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = `tab-btn whitespace-nowrap px-4 py-2 font-semibold text-gray-500 hover:text-gray-800`;
+                if(btn.innerHTML.includes(tab === 'notes' ? 'নোটস' : tab === 'videos' ? 'ভিডিও' : 'MCQ')) {
+                    btn.classList.add('active', 'border-b-2', 'border-primary', 'text-primary');
+                    btn.classList.remove('text-gray-500', 'hover:text-gray-800');
                 }
             });
 
+            const chName = CHAPTERS[state.currentChapter];
+
+            if (tab === 'notes') {
+                const materials = state.data.materials.filter(m => m.chapter === chName);
+                if(materials.length === 0) area.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো নোটস এখনো আপলোড করা হয়নি।</div>`;
+                else {
+                    area.innerHTML = `<div class="grid gap-4 md:grid-cols-2">` + materials.map(m => `
+                        <a href="${m.link}" target="_blank" class="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition group">
+                            <div class="bg-emerald-100 text-primary w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition"><i class="fa-solid fa-file-pdf"></i></div>
+                            <div class="ml-4">
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">${m.type}</span>
+                                <h3 class="font-bold text-gray-800 leading-tight">${m.title}</h3>
+                            </div>
+                        </a>
+                    `).join('') + `</div>`;
+                }
+            } 
+            else if (tab === 'videos') {
+                const videos = state.data.videos.filter(v => v.chapter === chName);
+                if(videos.length === 0) area.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো ভিডিও ক্লাস উপলব্ধ নেই।</div>`;
+                else {
+                    area.innerHTML = `<div class="grid gap-4 md:grid-cols-2">` + videos.map(v => {
+                        // Extract YT ID for thumbnail
+                        let ytId = '';
+                        try { ytId = v.link.split('v=')[1]?.split('&')[0] || v.link.split('youtu.be/')[1]?.split('?')[0]; } catch(e){}
+                        const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : 'https://via.placeholder.com/320x180?text=Video';
+                        
+                        return `
+                        <a href="${v.link}" target="_blank" class="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition">
+                            <div class="relative">
+                                <img src="${thumb}" class="w-full h-40 object-cover" alt="Video">
+                                <div class="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/10 transition">
+                                    <i class="fa-brands fa-youtube text-4xl text-white drop-shadow-md"></i>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-gray-800 line-clamp-2">${v.title}</h3>
+                            </div>
+                        </a>
+                    `}).join('') + `</div>`;
+                }
+            }
+            else if (tab === 'mcq') {
+                renderMCQ(area, chName);
+            }
+        }
+
+        function renderMCQ(container, chName) {
+            const mcqs = state.data.practiceTests.filter(q => q.chapter === chName);
+            
+            if(mcqs.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো প্র্যাকটিস প্রশ্ন নেই।</div>`;
+                return;
+            }
+
+            state.score = 0;
+            let html = `
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex justify-between items-center sticky top-0 z-10 border-b">
+                    <span class="font-bold text-gray-700">মোট প্রশ্ন: ${toBengaliNum(mcqs.length)}টি</span>
+                    <span class="font-bold text-primary bg-emerald-50 px-4 py-2 rounded-lg">স্কোর: <span id="mcq-score">০</span></span>
+                </div>
+                <div class="space-y-6">
+            `;
+
+            mcqs.forEach((q, i) => {
+                html += `
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100" id="q-card-${i}">
+                        <h3 class="font-bold text-gray-800 mb-4 text-lg"><span class="text-primary mr-2">${toBengaliNum(i+1)}.</span> ${q.q}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="q-opts-${i}">
+                            <button onclick="checkAns(this, 'optA', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">ক) ${q.optA}</button>
+                            <button onclick="checkAns(this, 'optB', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">খ) ${q.optB}</button>
+                            <button onclick="checkAns(this, 'optC', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">গ) ${q.optC}</button>
+                            <button onclick="checkAns(this, 'optD', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">ঘ) ${q.optD}</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function checkAns(btnElement, selectedOpt, correctOpt, qIndex) {
+            const container = document.getElementById(`q-opts-${qIndex}`);
+            const btns = container.querySelectorAll('.mcq-btn');
+            
+            // Disable all
+            btns.forEach(b => {
+                b.disabled = true;
+                b.classList.remove('hover:bg-gray-50');
+                b.classList.add('cursor-not-allowed', 'opacity-80');
+            });
+
+            // Map options to elements implicitly via structure
+            const optMap = ['optA', 'optB', 'optC', 'optD'];
+            
             if (selectedOpt === correctOpt) {
-                score++;
-                feedbackBox.className = "p-6 rounded-3xl mb-8 border-l-[10px] bg-green-50 border-green-500 block shadow-md";
-                feedbackMsg.innerText = "সঠিক উত্তর! ✅";
-                feedbackMsg.className = "text-2xl font-black text-green-700 mb-1";
-                correctDisplay.innerText = "খুব সুন্দর! আপনার উত্তরটি একদম সঠিক।";
-                correctDisplay.className = "text-lg font-bold text-green-600";
+                btnElement.classList.add('bg-green-500', 'text-white', 'border-green-600', 'font-bold');
+                state.score++;
+                document.getElementById('mcq-score').innerText = toBengaliNum(state.score);
             } else {
-                selectedBtn.classList.remove('bg-white', 'border-slate-100');
-                selectedBtn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
-
-                feedbackBox.className = "p-6 rounded-3xl mb-8 border-l-[10px] bg-red-50 border-red-500 block shadow-md";
-                feedbackMsg.innerText = "ভুল উত্তর! ❌";
-                feedbackMsg.className = "text-2xl font-black text-red-700 mb-1";
-                correctDisplay.innerText = `সঠিক উত্তর: ${rawAnswerString}`;
-                correctDisplay.className = "text-lg font-bold text-red-600";
+                btnElement.classList.add('bg-red-500', 'text-white', 'border-red-600');
+                // Highlight correct
+                const correctIdx = optMap.indexOf(correctOpt);
+                if(correctIdx !== -1) {
+                    btns[correctIdx].classList.add('bg-green-500', 'text-white', 'border-green-600', 'font-bold');
+                }
             }
-
-            document.getElementById('next').classList.remove('hidden');
         }
 
-        function nextQuestion() {
-            currentIndex++;
-            if (currentIndex < currentQuestions.length) {
-                loadQuestion();
-            } else {
-                showFinish();
+        // ==========================================
+        // 7. ADMIN DASHBOARD LOGIC
+        // ==========================================
+
+        function switchAdminTab(tabId) {
+            // UI styling
+            document.querySelectorAll('.admin-tab').forEach(el => {
+                el.classList.remove('bg-gray-700', 'border-primary');
+                el.classList.add('border-transparent');
+            });
+            event.currentTarget.classList.add('bg-gray-700', 'border-primary');
+            event.currentTarget.classList.remove('border-transparent');
+
+            if (window.innerWidth < 768) {
+                document.getElementById('admin-sidebar').classList.add('-translate-x-full');
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            renderAdminContent(tabId);
         }
 
-        function showFinish() {
-            document.getElementById('quiz-page').classList.add('hidden');
-            document.getElementById('finish-page').classList.remove('hidden');
-            document.getElementById('score').innerText = `${score} / ${currentQuestions.length}`;
+        function renderAdminContent(tabId) {
+            const main = document.getElementById('admin-main-content');
+            let html = '';
+
+            const chOptions = CHAPTERS.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            if (tabId === 'students') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-4">নিবন্ধিত ছাত্রছাত্রী (${state.data.students.length})</h2>
+                    <div class="bg-white rounded-lg shadow overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr class="bg-gray-200 text-gray-700"><th class="p-3">নাম</th><th class="p-3">রোল</th><th class="p-3">সেকশন</th><th class="p-3">স্কুল</th></tr></thead>
+                            <tbody>
+                                ${state.data.students.map(s => `<tr class="border-b"><td class="p-3">${s.name}</td><td class="p-3">${s.roll}</td><td class="p-3">${s.section}</td><td class="p-3">${s.school}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } 
+            else if (tabId === 'logs') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-4">লগিন হিস্ট্রি</h2>
+                    <div class="bg-white rounded-lg shadow overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr class="bg-gray-200 text-gray-700"><th class="p-3">তারিখ ও সময়</th><th class="p-3">নাম</th><th class="p-3">রোল</th><th class="p-3">ক্লাস-সেকশন</th></tr></thead>
+                            <tbody>
+                                ${[...state.data.logs].reverse().slice(0, 100).map(l => `<tr class="border-b"><td class="p-3 text-sm text-gray-500">${l.date}</td><td class="p-3 font-semibold">${l.name}</td><td class="p-3">${l.roll}</td><td class="p-3">${l.classSec}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            else if (tabId === 'materials') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-4">স্টাডি মেটেরিয়াল যোগ করুন</h2>
+                    <form onsubmit="handleAdminSubmit(event, 'add_material')" class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-bold mb-1">অধ্যায়</label><select name="chapter" class="w-full border rounded p-2">${chOptions}</select></div>
+                            <div><label class="block text-sm font-bold mb-1">টাইপ</label><input type="text" name="type" value="Notes" class="w-full border rounded p-2"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-bold mb-1">শিরোনাম</label><input type="text" name="title" required class="w-full border rounded p-2"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-bold mb-1">লিংক (Drive PDF etc.)</label><input type="url" name="link" required class="w-full border rounded p-2"></div>
+                        </div>
+                        <button type="submit" class="bg-primary text-white px-4 py-2 rounded font-bold hover:bg-dark">যোগ করুন</button>
+                    </form>
+                    <h3 class="font-bold mb-2">বিদ্যমান মেটেরিয়ালস (${state.data.materials.length})</h3>
+                    <ul class="space-y-2">
+                        ${state.data.materials.map(m => `<li class="bg-white p-3 rounded shadow-sm text-sm border-l-4 border-primary"><b>${m.chapter}</b>: <a href="${m.link}" target="_blank" class="text-blue-600 hover:underline">${m.title}</a> (${m.type})</li>`).join('')}
+                    </ul>
+                `;
+            }
+            else if (tabId === 'videos') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-4">ভিডিও ক্লাস যোগ করুন</h2>
+                    <form onsubmit="handleAdminSubmit(event, 'add_video')" class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
+                        <div><label class="block text-sm font-bold mb-1">অধ্যায়</label><select name="chapter" class="w-full border rounded p-2">${chOptions}</select></div>
+                        <div><label class="block text-sm font-bold mb-1">শিরোনাম</label><input type="text" name="title" required class="w-full border rounded p-2"></div>
+                        <div><label class="block text-sm font-bold mb-1">ইউটিউব লিংক</label><input type="url" name="link" required class="w-full border rounded p-2"></div>
+                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded font-bold hover:bg-red-600">যোগ করুন</button>
+                    </form>
+                    <ul class="space-y-2">
+                        ${state.data.videos.map(v => `<li class="bg-white p-3 rounded shadow-sm text-sm border-l-4 border-red-500"><b>${v.chapter}</b>: <a href="${v.link}" target="_blank" class="text-blue-600 hover:underline">${v.title}</a></li>`).join('')}
+                    </ul>
+                `;
+            }
+            else if (tabId === 'mockTests') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-4">গ্লোবাল মক টেস্ট যোগ করুন</h2>
+                    <form onsubmit="handleAdminSubmit(event, 'add_mock_test')" class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
+                        <div><label class="block text-sm font-bold mb-1">পরীক্ষার নাম/শিরোনাম</label><input type="text" name="title" required class="w-full border rounded p-2"></div>
+                        <div><label class="block text-sm font-bold mb-1">লিংক (Google Form / Any Tool)</label><input type="url" name="link" required class="w-full border rounded p-2"></div>
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded font-bold hover:bg-blue-600">যোগ করুন</button>
+                    </form>
+                    <ul class="space-y-2">
+                        ${state.data.mockTests.map(m => `<li class="bg-white p-3 rounded shadow-sm flex justify-between items-center border-l-4 border-blue-500"><span><b>${m.title}</b></span> <a href="${m.link}" target="_blank" class="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Open <i class="fa-solid fa-external-link-alt"></i></a></li>`).join('')}
+                    </ul>
+                `;
+            }
+            else if (tabId === 'practiceTests') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-4">প্র্যাকটিস MCQ যোগ করুন</h2>
+                    <form onsubmit="handleAdminSubmit(event, 'add_practice_test')" class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
+                        <div><label class="block text-sm font-bold mb-1">অধ্যায়</label><select name="chapter" class="w-full border rounded p-2">${chOptions}</select></div>
+                        <div><label class="block text-sm font-bold mb-1">প্রশ্ন</label><textarea name="q" required class="w-full border rounded p-2" rows="2"></textarea></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs font-bold">ক) Option A</label><input type="text" name="optA" required class="w-full border rounded p-1"></div>
+                            <div><label class="text-xs font-bold">খ) Option B</label><input type="text" name="optB" required class="w-full border rounded p-1"></div>
+                            <div><label class="text-xs font-bold">গ) Option C</label><input type="text" name="optC" required class="w-full border rounded p-1"></div>
+                            <div><label class="text-xs font-bold">ঘ) Option D</label><input type="text" name="optD" required class="w-full border rounded p-1"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">সঠিক উত্তর নির্বাচন করুন</label>
+                            <select name="ans" class="w-full border rounded p-2 bg-green-50 font-bold">
+                                <option value="optA">ক) Option A</option>
+                                <option value="optB">খ) Option B</option>
+                                <option value="optC">গ) Option C</option>
+                                <option value="optD">ঘ) Option D</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-700">যোগ করুন</button>
+                    </form>
+                    <div class="bg-white rounded p-4 shadow text-sm">
+                        <b>সর্বমোট প্রশ্ন: ${state.data.practiceTests.length}</b>
+                    </div>
+                `;
+            }
+
+            main.innerHTML = html;
+        }
+
+        async function handleAdminSubmit(e, action) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
             
-            const saveMsg = document.getElementById('save-status-msg');
+            showSpinner(true);
+            const success = await fetchAPI(action, data);
             
-            if (isTestMode && GOOGLE_SCRIPT_URL) {
-                saveMsg.innerHTML = `<span class="text-blue-600 font-bold flex items-center justify-center gap-2"><svg class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> টেস্টের রেজাল্ট সেভ করা হচ্ছে...</span>`;
-                saveMsg.className = "text-lg mb-8 p-4 rounded-xl bg-blue-50 border border-blue-200 block";
+            if (success) {
+                showToast('সফলভাবে যুক্ত করা হয়েছে!');
+                e.target.reset();
+                await initData(); // Re-fetch
                 
-                const scoreData = {
-                    ...studentData,
-                    action: 'save_score',
-                    testType: `${currentQuestions.length} Qs Test`,
-                    score: score,
-                    total: currentQuestions.length,
-                    timestamp: new Date().toLocaleString()
+                // Re-render current tab
+                const currentTabMap = {
+                    'add_material': 'materials',
+                    'add_video': 'videos',
+                    'add_mock_test': 'mockTests',
+                    'add_practice_test': 'practiceTests'
                 };
-                
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(scoreData)
-                }).then(res => {
-                    saveMsg.innerHTML = `<span class="text-green-700 font-bold">✅ রেজাল্ট সফলভাবে এক্সেল শিটে সেভ হয়েছে!</span>`;
-                    saveMsg.className = "text-lg mb-8 p-4 rounded-xl bg-green-50 border border-green-200 block";
-                }).catch(err => {
-                    saveMsg.innerHTML = `<span class="text-red-700 font-bold">❌ রেজাল্ট সেভ করতে সমস্যা হয়েছে।</span>`;
-                    saveMsg.className = "text-lg mb-8 p-4 rounded-xl bg-red-50 border border-red-200 block";
-                });
+                renderAdminContent(currentTabMap[action]);
             } else {
-                saveMsg.classList.add('hidden');
+                showToast('সংরক্ষণ করতে সমস্যা হয়েছে!', 'error');
             }
+            showSpinner(false);
         }
 
-        function resetQuiz() {
-            if (isTestMode) {
-                startTest(currentQuestions.length);
-            } else {
-                startQuiz(currentTopicId);
-            }
-        }
+        // ==========================================
+        // INITIALIZE APP ON LOAD
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', initApp);
 
-        function goHome() {
-            document.getElementById('quiz-page').classList.add('hidden');
-            document.getElementById('finish-page').classList.add('hidden');
-            document.getElementById('home-page').classList.remove('hidden');
-            window.scrollTo(0,0);
-        }
     </script>
 </body>
 </html>
