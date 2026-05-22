@@ -191,7 +191,7 @@
         // ==========================================
         
         // REPLACE THIS URL WITH YOUR PUBLISHED GOOGLE APPS SCRIPT WEB APP URL
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzrioIHKmp75PjdCIoPQD4Wy4xvWAf6ao09N_LyMhLHt8YvTrXtCFH8zJh5oH_cOZ3bOw/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby0nBKY6U_iz4yeQkufV1rUsUtsyI-GtFPB7prsT9Q4UEVEKRrscCF5ctj90uEZGBV_TQ/exec"; 
 
         const CHAPTERS = [
             "জীবজগতে নিয়ন্ত্রণ ও সমন্বয়",
@@ -512,6 +512,8 @@
                     <!-- Tabs -->
                     <div class="flex gap-2 border-b mb-6 overflow-x-auto pb-1 hide-scrollbar">
                         <button onclick="switchChapterTab('notes')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'notes' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-solid fa-book-open mr-2"></i>স্টাডি নোটস</button>
+                        <button onclick="switchChapterTab('pyq')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'pyq' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-solid fa-clock-rotate-left mr-2"></i>পূর্ববর্তী প্রশ্ন</button>
+                        <button onclick="switchChapterTab('qbank')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'qbank' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-solid fa-layer-group mr-2"></i>প্রশ্ন সংকলন</button>
                         <button onclick="switchChapterTab('videos')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'videos' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-brands fa-youtube text-red-500 mr-2"></i>ভিডিও ক্লাস</button>
                         <button onclick="switchChapterTab('mcq')" class="tab-btn whitespace-nowrap px-4 py-2 font-semibold ${state.studentTab === 'mcq' ? 'active' : 'text-gray-500 hover:text-gray-800'}"><i class="fa-solid fa-brain text-purple-500 mr-2"></i>প্র্যাকটিস MCQ</button>
                     </div>
@@ -531,28 +533,28 @@
             // Re-render tabs highlighting
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.className = `tab-btn whitespace-nowrap px-4 py-2 font-semibold text-gray-500 hover:text-gray-800`;
-                if(btn.innerHTML.includes(tab === 'notes' ? 'নোটস' : tab === 'videos' ? 'ভিডিও' : 'MCQ')) {
+                if(btn.innerHTML.includes(tab === 'notes' ? 'নোটস' : tab === 'pyq' ? 'পূর্ববর্তী' : tab === 'qbank' ? 'সংকলন' : tab === 'videos' ? 'ভিডিও' : 'MCQ')) {
                     btn.classList.add('active', 'border-b-2', 'border-primary', 'text-primary');
                     btn.classList.remove('text-gray-500', 'hover:text-gray-800');
                 }
             });
 
-            // Make sure we have the exact chapter name to filter by
             const chName = CHAPTERS[state.currentChapter];
-            console.log("Current Chapter:", chName); // For debugging
-            console.log("All Materials:", state.data.materials); // For debugging
 
-            if (tab === 'notes') {
-                // Filter ensuring exact match
-                const materials = state.data.materials.filter(m => m.chapter === chName);
+            if (tab === 'notes' || tab === 'pyq' || tab === 'qbank') {
+                const targetType = tab === 'notes' ? 'Notes' : tab === 'pyq' ? 'PYQ' : 'QuestionBank';
+                const emptyMsg = tab === 'notes' ? 'নোটস' : tab === 'pyq' ? 'পূর্ববর্তী মাধ্যমিক প্রশ্ন' : 'প্রশ্ন সংকলন';
+                
+                const materials = state.data.materials.filter(m => m.chapter === chName && m.type === targetType);
+                
                 if(materials.length === 0) {
-                     area.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো নোটস এখনো আপলোড করা হয়নি।</div>`;
+                    area.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো ${emptyMsg} এখনো আপলোড করা হয়নি।</div>`;
                 } else {
                     area.innerHTML = `<div class="grid gap-4 md:grid-cols-2">` + materials.map(m => `
                         <a href="${m.link}" target="_blank" class="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition group">
                             <div class="bg-emerald-100 text-primary w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition"><i class="fa-solid fa-file-pdf"></i></div>
                             <div class="ml-4">
-                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">${m.type || 'Notes'}</span>
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">${m.type === 'PYQ' ? 'Previous Year' : m.type === 'QuestionBank' ? 'Q-Bank' : 'Notes'}</span>
                                 <h3 class="font-bold text-gray-800 leading-tight">${m.title}</h3>
                             </div>
                         </a>
@@ -715,7 +717,14 @@
                     <form onsubmit="handleAdminSubmit(event, 'add_material')" class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
                         <div class="grid md:grid-cols-2 gap-4">
                             <div><label class="block text-sm font-bold mb-1">অধ্যায়</label><select name="chapter" class="w-full border rounded p-2">${chOptions}</select></div>
-                            <div><label class="block text-sm font-bold mb-1">টাইপ</label><input type="text" name="type" value="Notes" class="w-full border rounded p-2"></div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1">ক্যাটাগরি/টাইপ</label>
+                                <select name="type" class="w-full border rounded p-2 bg-gray-50">
+                                    <option value="Notes">স্টাডি নোটস</option>
+                                    <option value="PYQ">পূর্ববর্তী পরীক্ষার প্রশ্ন (PYQ)</option>
+                                    <option value="QuestionBank">প্রশ্ন সংকলন</option>
+                                </select>
+                            </div>
                             <div class="md:col-span-2"><label class="block text-sm font-bold mb-1">শিরোনাম</label><input type="text" name="title" required class="w-full border rounded p-2"></div>
                             <div class="md:col-span-2"><label class="block text-sm font-bold mb-1">লিংক (Drive PDF etc.)</label><input type="url" name="link" required class="w-full border rounded p-2"></div>
                         </div>
@@ -723,7 +732,7 @@
                     </form>
                     <h3 class="font-bold mb-2">বিদ্যমান মেটেরিয়ালস (${state.data.materials.length})</h3>
                     <ul class="space-y-2">
-                        ${state.data.materials.map(m => `<li class="bg-white p-3 rounded shadow-sm text-sm border-l-4 border-primary"><b>${m.chapter}</b>: <a href="${m.link}" target="_blank" class="text-blue-600 hover:underline">${m.title}</a> (${m.type})</li>`).join('')}
+                        ${state.data.materials.map(m => `<li class="bg-white p-3 rounded shadow-sm text-sm border-l-4 border-primary"><b>${m.chapter}</b> <span class="bg-gray-200 px-2 py-0.5 rounded text-xs ml-2">${m.type === 'PYQ' ? 'Previous Year' : m.type}</span> <br><a href="${m.link}" target="_blank" class="text-blue-600 hover:underline mt-1 inline-block">${m.title}</a></li>`).join('')}
                     </ul>
                 `;
             }
