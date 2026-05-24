@@ -191,7 +191,7 @@
         // ==========================================
         
         // REPLACE THIS URL WITH YOUR PUBLISHED GOOGLE APPS SCRIPT WEB APP URL
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby0nBKY6U_iz4yeQkufV1rUsUtsyI-GtFPB7prsT9Q4UEVEKRrscCF5ctj90uEZGBV_TQ/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyY792WioIYJuKtfIchKSNKd3RPTwTQ16RlAL8w56vM7TgAcm6W9IJTMesLBrvER7Vr7w/exec"; 
 
         const CHAPTERS = [
             "জীবজগতে নিয়ন্ত্রণ ও সমন্বয়",
@@ -595,28 +595,23 @@
             const mcqs = state.data.practiceTests.filter(q => q.chapter === chName);
             
             if(mcqs.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো প্র্যাকটিস প্রশ্ন নেই।</div>`;
+                container.innerHTML = `<div class="p-8 text-center bg-white rounded-xl text-gray-500 shadow-sm">এই অধ্যায়ের কোনো প্র্যাকটিস মক টেস্ট উপলব্ধ নেই।</div>`;
                 return;
             }
 
-            state.score = 0;
-            let html = `
-                <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex justify-between items-center sticky top-0 z-10 border-b">
-                    <span class="font-bold text-gray-700">মোট প্রশ্ন: ${toBengaliNum(mcqs.length)}টি</span>
-                    <span class="font-bold text-primary bg-emerald-50 px-4 py-2 rounded-lg">স্কোর: <span id="mcq-score">০</span></span>
-                </div>
-                <div class="space-y-6">
-            `;
+            let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
 
             mcqs.forEach((q, i) => {
                 html += `
-                    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100" id="q-card-${i}">
-                        <h3 class="font-bold text-gray-800 mb-4 text-lg"><span class="text-primary mr-2">${toBengaliNum(i+1)}.</span> ${q.q}</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="q-opts-${i}">
-                            <button onclick="checkAns(this, 'optA', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">ক) ${q.optA}</button>
-                            <button onclick="checkAns(this, 'optB', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">খ) ${q.optB}</button>
-                            <button onclick="checkAns(this, 'optC', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">গ) ${q.optC}</button>
-                            <button onclick="checkAns(this, 'optD', '${q.ans}', ${i})" class="mcq-btn text-left p-3 border rounded-lg hover:bg-gray-50 transition">ঘ) ${q.optD}</button>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-list-check"></i></div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">${q.title}</h3>
+                                <button onclick="openExternalTest('${q.link}')" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                                    Test Start করুন <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -624,34 +619,6 @@
 
             html += `</div>`;
             container.innerHTML = html;
-        }
-
-        function checkAns(btnElement, selectedOpt, correctOpt, qIndex) {
-            const container = document.getElementById(`q-opts-${qIndex}`);
-            const btns = container.querySelectorAll('.mcq-btn');
-            
-            // Disable all
-            btns.forEach(b => {
-                b.disabled = true;
-                b.classList.remove('hover:bg-gray-50');
-                b.classList.add('cursor-not-allowed', 'opacity-80');
-            });
-
-            // Map options to elements implicitly via structure
-            const optMap = ['optA', 'optB', 'optC', 'optD'];
-            
-            if (selectedOpt === correctOpt) {
-                btnElement.classList.add('bg-green-500', 'text-white', 'border-green-600', 'font-bold');
-                state.score++;
-                document.getElementById('mcq-score').innerText = toBengaliNum(state.score);
-            } else {
-                btnElement.classList.add('bg-red-500', 'text-white', 'border-red-600');
-                // Highlight correct
-                const correctIdx = optMap.indexOf(correctOpt);
-                if(correctIdx !== -1) {
-                    btns[correctIdx].classList.add('bg-green-500', 'text-white', 'border-green-600', 'font-bold');
-                }
-            }
         }
 
         // ==========================================
@@ -765,30 +732,16 @@
             }
             else if (tabId === 'practiceTests') {
                 html = `
-                    <h2 class="text-2xl font-bold mb-4">প্র্যাকটিস MCQ যোগ করুন</h2>
+                    <h2 class="text-2xl font-bold mb-4">অধ্যায়ভিত্তিক মক টেস্ট (Google Form) যোগ করুন</h2>
                     <form onsubmit="handleAdminSubmit(event, 'add_practice_test')" class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
                         <div><label class="block text-sm font-bold mb-1">অধ্যায়</label><select name="chapter" class="w-full border rounded p-2">${chOptions}</select></div>
-                        <div><label class="block text-sm font-bold mb-1">প্রশ্ন</label><textarea name="q" required class="w-full border rounded p-2" rows="2"></textarea></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-xs font-bold">ক) Option A</label><input type="text" name="optA" required class="w-full border rounded p-1"></div>
-                            <div><label class="text-xs font-bold">খ) Option B</label><input type="text" name="optB" required class="w-full border rounded p-1"></div>
-                            <div><label class="text-xs font-bold">গ) Option C</label><input type="text" name="optC" required class="w-full border rounded p-1"></div>
-                            <div><label class="text-xs font-bold">ঘ) Option D</label><input type="text" name="optD" required class="w-full border rounded p-1"></div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">সঠিক উত্তর নির্বাচন করুন</label>
-                            <select name="ans" class="w-full border rounded p-2 bg-green-50 font-bold">
-                                <option value="optA">ক) Option A</option>
-                                <option value="optB">খ) Option B</option>
-                                <option value="optC">গ) Option C</option>
-                                <option value="optD">ঘ) Option D</option>
-                            </select>
-                        </div>
+                        <div><label class="block text-sm font-bold mb-1">টেস্টের নাম/শিরোনাম</label><input type="text" name="title" required class="w-full border rounded p-2"></div>
+                        <div><label class="block text-sm font-bold mb-1">Google Form লিংক</label><input type="url" name="link" required class="w-full border rounded p-2"></div>
                         <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-700">যোগ করুন</button>
                     </form>
-                    <div class="bg-white rounded p-4 shadow text-sm">
-                        <b>সর্বমোট প্রশ্ন: ${state.data.practiceTests.length}</b>
-                    </div>
+                    <ul class="space-y-2">
+                        ${state.data.practiceTests.map(p => `<li class="bg-white p-3 rounded shadow-sm flex justify-between items-center border-l-4 border-purple-500"><span><b>${p.chapter}</b> - ${p.title}</span> <a href="${p.link}" target="_blank" class="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Open <i class="fa-solid fa-external-link-alt"></i></a></li>`).join('')}
+                    </ul>
                 `;
             }
 
